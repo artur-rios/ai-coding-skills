@@ -20,6 +20,7 @@ hand, you just describe what you want.
 
 | Skill | What it does | Docs |
 |---|---|---|
+| **create-unit-tests** | Generates a thorough unit-test suite for a target project, using Given-When-Then test names and covering happy paths plus edge cases. | [docs/create-unit-tests.md](docs/create-unit-tests.md) |
 | **create-nuget-publish-workflow** | Generates a tag-triggered GitHub Actions workflow that publishes a .NET project's NuGet package(s) to nuget.org and GitHub Packages. | [docs/create-nuget-publish-workflow.md](docs/create-nuget-publish-workflow.md) |
 | **generate-project-docs** | Generates a README plus a Hugo docs site (deployed to GitHub Pages via CI) for the current project. | [docs/generate-project-docs.md](docs/generate-project-docs.md) |
 
@@ -32,8 +33,12 @@ and what files it contains.
 .
 ├── README.md
 ├── docs/                              # Per-skill documentation (linked above)
+│   ├── create-unit-tests.md
 │   ├── create-nuget-publish-workflow.md
 │   └── generate-project-docs.md
+├── create-unit-tests/
+│   ├── SKILL.md
+│   └── references/
 ├── create-nuget-publish-workflow/
 │   ├── SKILL.md
 │   └── templates/
