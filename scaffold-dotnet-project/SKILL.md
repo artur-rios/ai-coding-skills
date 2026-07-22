@@ -15,10 +15,10 @@ flow. Asks the user everything needed **before** any file is created, then runs
 never mix questions with file creation. If you `dotnet new` before all answers
 are collected, you must delete the output and start over.
 
-**This skill scaffolds exactly one `dotnet new` project and one solution.**
-It does NOT create layered class library projects for DDD — the DDD folders
-are empty scaffolding directories, not `.csproj` projects. Only the WebApi
-presentation project gets created via `dotnet new`.
+**This skill scaffolds exactly two `dotnet new` projects in DDD mode** (the
+WebApi presentation project and the Domain class library) and one project in
+basic mode. The Application and Infrastructure folders are empty scaffolding
+directories — no extra `.csproj` projects beyond those specified.
 
 ## When to Use
 
@@ -36,8 +36,9 @@ Skip / adapt if:
 
 ## Red Flags — STOP and Re-read the Procedure
 
-- "I'll add an Application class library project too" → NO. DDD folders are
-  empty directories, not projects.
+- "I'll add an Application or Infrastructure class library project too" → NO.
+  Only the Domain project is a class library. Application and Infrastructure
+  are empty directories.
 - "Let me scaffold the project first and ask questions later" → NO. Collect
   every answer before running `dotnet new`.
 - "Modern SDKs use .slnx so I'll just use that" → NO. Use `--format sln`.
@@ -48,8 +49,8 @@ Skip / adapt if:
 
 | Rationalization | Reality |
 |---|---|
-| "DDD means creating separate class libraries for each layer" | This skill creates EMPTY folders for DDD scaffolding. Only the WebApi project is a real `.csproj`. |
-| "I should set up a proper multi-project DDD solution" | The user can add those later. This skill bootstraps the starting point. |
+| "DDD means creating separate class libraries for each layer" | This skill creates the Domain project as a class library and the WebApi as a presentation project. Application and Infrastructure are empty scaffolding directories. |
+| "I should set up a proper multi-project DDD solution with all layers" | The user can add those later. This skill bootstraps the starting point with Domain + WebApi. |
 | ".slnx is the modern default, .sln is legacy" | `--format sln` ensures tooling compatibility. The user asked for .sln. |
 | "I know what questions to ask without reading the procedure" | The procedure specifies exact question ordering and wording. Follow it. |
 
@@ -126,24 +127,22 @@ If no prefix, omit it entirely — do not add a placeholder.
 
 Ask: *"Do you want a Domain-Driven Design folder structure?"*
 
-**If yes (DDD):** Create exactly ONE `dotnet new` project (the WebApi), plus
-empty scaffolding directories. Do NOT create class library projects for the
-Application, Domain, or Infrastructure layers.
+**If yes (DDD):** Create exactly TWO `dotnet new` projects (the WebApi and
+the Domain class library), plus empty scaffolding directories.
 
 ```
 docs/
 src/
-  Application/
-    Commands/          ← empty directory
-    Queries/           ← empty directory
+  Application/        ← empty directory
   Domain/
-    Entities/          ← empty directory
-  Infrastructure/      ← empty directory
+    <Prefix.>ProjectName.Domain/
+      <Prefix.>ProjectName.Domain.csproj   ← dotnet new classlib
+  Infrastructure/     ← empty directory
   Presentation/
     <Prefix.>ProjectName.WebApi/
-      <Prefix.>ProjectName.WebApi.csproj   ← the ONLY dotnet new project
+      <Prefix.>ProjectName.WebApi.csproj   ← the WebApi dotnet new project
   <Prefix.>SolutionName.sln
-tests/                 ← empty directory
+tests/                ← empty directory
 README.md
 LICENSE
 ```
@@ -154,16 +153,21 @@ Commands to scaffold DDD mode (substitute placeholders):
 # 1. Create the WebApi project
 dotnet new <template> -n <Prefix.>ProjectName.WebApi -o src/Presentation/<Prefix.>ProjectName.WebApi
 
-# 2. Create the solution (IN src/, NOT repo root)
+# 2. Create the Domain class library
+dotnet new classlib -n <Prefix.>ProjectName.Domain -o src/Domain/<Prefix.>ProjectName.Domain
+
+# 3. Create the solution (IN src/, NOT repo root)
 dotnet new sln --format sln -n <Prefix.>SolutionName -o src
 
-# 3. Add project to solution
+# 4. Add both projects to solution
 dotnet sln src/<Prefix.>SolutionName.sln add src/Presentation/<Prefix.>ProjectName.WebApi/<Prefix.>ProjectName.WebApi.csproj
+dotnet sln src/<Prefix.>SolutionName.sln add src/Domain/<Prefix.>ProjectName.Domain/<Prefix.>ProjectName.Domain.csproj
 
-# 4. Create empty DDD scaffolding directories
-mkdir -p src/Application/Commands
-mkdir -p src/Application/Queries
-mkdir -p src/Domain/Entities
+# 5. Add project reference from WebApi to Domain
+dotnet add src/Presentation/<Prefix.>ProjectName.WebApi/<Prefix.>ProjectName.WebApi.csproj reference src/Domain/<Prefix.>ProjectName.Domain/<Prefix.>ProjectName.Domain.csproj
+
+# 6. Create empty DDD scaffolding directories
+mkdir -p src/Application
 mkdir -p src/Infrastructure
 ```
 
@@ -212,14 +216,19 @@ Ask: *"Which license? Options: MIT, AGPL, or Custom Commercial."*
 ### 7. Scaffold — execute in this exact order
 
 1. Create `docs/` and `tests/` directories at the repo root.
-2. Run `dotnet new <template> …` to create the project.
-3. Run `dotnet new sln --format sln …` and `dotnet sln … add …` to wire up the solution.
-4. If DDD mode, create the empty scaffolding directories (`src/Application/Commands`,
-   `src/Application/Queries`, `src/Domain/Entities`, `src/Infrastructure`).
-5. Write `README.md` with project name, description, build instructions
+2. Run `dotnet new <template> …` to create the WebApi project.
+3. If DDD mode, run `dotnet new classlib …` to create the Domain project, then
+   add a project reference from WebApi to Domain with `dotnet add … reference …`.
+4. Run `dotnet new sln --format sln …` and `dotnet sln … add …` to wire up the solution.
+5. If DDD mode, create the empty scaffolding directories (`src/Application`,
+   `src/Infrastructure`).
+6. Copy **all files** from `references/` in this skill's directory into the repo
+   root: `.editorconfig`, `.gitignore`, and `.wakatime-project`. These files are
+   always included in every scaffolded project.
+7. Write `README.md` with project name, description, build instructions
    (`dotnet build`, `dotnet test`), and license reference.
-6. Write `LICENSE` per the user's choice.
-7. Run `dotnet build src/<Prefix.>SolutionName.sln` to verify the scaffold builds.
+8. Write `LICENSE` per the user's choice.
+9. Run `dotnet build src/<Prefix.>SolutionName.sln` to verify the scaffold builds.
 
 ### 8. Report
 
@@ -244,10 +253,13 @@ Tell the user:
 
 - **Scaffolding before asking all questions.** Never run `dotnet new` until every
   answer is collected.
-- **Creating multiple `dotnet new` projects for DDD layers.** The Application,
-  Domain, and Infrastructure folders in DDD mode are empty directories — NOT
-  class library projects. Only the WebApi presentation project is created via
-  `dotnet new`.
+- **Creating multiple `dotnet new` projects for DDD layers.** In DDD mode,
+  only the WebApi presentation project and the Domain class library are created
+  via `dotnet new`. Application and Infrastructure are empty directories.
+- **Creating `Commands/` or `Queries/` folders inside `Application/`.** The
+  Application folder is a single empty directory — no subdirectories.
+- **Creating an `Entities/` folder inside `Domain/`.** The Domain folder
+  contains a `classlib` project in its own subdirectory, not an `Entities/` folder.
 - **Omitting `--format sln` when creating the solution.** Modern SDKs default to
   `.slnx`. Always pass `--format sln` to produce a classic `.sln` file.
 - **Putting the `.sln` in the repo root.** It goes in `src/` in both modes.
@@ -255,6 +267,12 @@ Tell the user:
   to catch mismatched SDK versions or template issues.
 - **Guessing the prefix.** Leave it empty unless the user provides one; never
   invent a placeholder like `Company` or `MyOrg`.
+- **Forgetting to copy reference files.** Always copy `.editorconfig`,
+  `.gitignore`, and `.wakatime-project` from `references/` into the scaffolded
+  project root.
+- **Forgetting the project reference in DDD mode.** After creating both
+  projects, add a reference from WebApi to Domain with
+  `dotnet add … reference …`.
 - **Forgetting the license follow-ups for custom commercial.** Ask for copyright
   holder, grant, and restrictions — don't write a one-line placeholder.
 - **Creating a test project (`xunit`/`nunit`/`mstest`) unprompted.** The
