@@ -23,7 +23,9 @@ hand, you just describe what you want.
 | **create-unit-tests** | Generates a thorough unit-test suite for a target project, using Given-When-Then test names and covering happy paths plus edge cases. | [docs/create-unit-tests.md](docs/create-unit-tests.md) |
 | **create-nuget-publish-workflow** | Generates a tag-triggered GitHub Actions workflow that publishes a .NET project's NuGet package(s) to nuget.org and GitHub Packages. | [docs/create-nuget-publish-workflow.md](docs/create-nuget-publish-workflow.md) |
 | **generate-project-docs** | Generates a README plus a Hugo docs site (deployed to GitHub Pages via CI) for the current project. | [docs/generate-project-docs.md](docs/generate-project-docs.md) |
+| **scaffold-dotnet-project** | Bootstraps a new .NET solution from scratch — `dotnet new` template, DDD or basic layout, config files, README and LICENSE, verified with a build. | [docs/scaffold-dotnet-project.md](docs/scaffold-dotnet-project.md) |
 | **commit-staged-changes** | Commits the already-staged files with a lowercase Conventional Commits message that follows the 50/72 rule. | [docs/commit-staged-changes.md](docs/commit-staged-changes.md) |
+| **generate-specs-from-brainstorm** | Expands a `Brainstorm.md` into eleven project documents — an informal `initial/` set, then a formal `requirements/` set — pausing for review between the two. | [docs/generate-specs-from-brainstorm.md](docs/generate-specs-from-brainstorm.md) |
 
 Each linked page explains what the skill does, when it triggers, how it works,
 and what files it contains.
@@ -37,6 +39,8 @@ and what files it contains.
 │   ├── create-unit-tests.md
 │   ├── create-nuget-publish-workflow.md
 │   ├── generate-project-docs.md
+│   ├── generate-specs-from-brainstorm.md
+│   ├── scaffold-dotnet-project.md
 │   └── commit-staged-changes.md
 ├── create-unit-tests/
 │   ├── SKILL.md
@@ -45,6 +49,13 @@ and what files it contains.
 │   ├── SKILL.md
 │   └── templates/
 ├── generate-project-docs/
+│   ├── SKILL.md
+│   └── references/
+├── generate-specs-from-brainstorm/
+│   ├── SKILL.md
+│   ├── references/
+│   └── templates/
+├── scaffold-dotnet-project/
 │   ├── SKILL.md
 │   └── references/
 └── commit-staged-changes/
