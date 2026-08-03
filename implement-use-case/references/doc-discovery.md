@@ -88,9 +88,14 @@ where, so the user can correct a misreading before any work starts.
 | Test command(s) and how suites are separated | Testing Specification §Running the suites |
 | Definition of Done checklist | Development Workflow §Definition of Done |
 | Pull request target and description convention | Development Workflow §Step 6 |
+| Whether the backlog is mirrored in the root `README.md`, and how it marks done | The repository's `README.md` — see [readme-tracking.md](readme-tracking.md) §1 |
 
 **If a parameter is undefined in the documents, ask.** A branch pattern nobody
 wrote down is not a branch pattern you get to choose.
+
+The README check is the one exception to "read it from the documents": the README
+is not a workflow document, and its absence of tracking is an answer, not a gap to
+ask about.
 
 ## 5. Load the use case specifications
 

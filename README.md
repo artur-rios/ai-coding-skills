@@ -26,7 +26,7 @@ hand, you just describe what you want.
 | **scaffold-dotnet-project** | Bootstraps a new .NET solution from scratch — `dotnet new` template, DDD or basic layout, config files, README and LICENSE, verified with a build. | [docs/scaffold-dotnet-project.md](docs/scaffold-dotnet-project.md) |
 | **commit-staged-changes** | Commits the already-staged files with a lowercase Conventional Commits message that follows the 50/72 rule. | [docs/commit-staged-changes.md](docs/commit-staged-changes.md) |
 | **generate-specs-from-brainstorm** | Expands a `Brainstorm.md` into twelve project documents — an informal `initial/` set, a formal `requirements/` set, and a README — then derives GitHub milestones and issues from the use cases, pausing for review at each hand-off. | [docs/generate-specs-from-brainstorm.md](docs/generate-specs-from-brainstorm.md) |
-| **implement-use-case** | Drives one use case from backlog to a review-ready pull request, following the project's own workflow documents and pausing for approval at every stage boundary. | [docs/implement-use-case.md](docs/implement-use-case.md) |
+| **implement-use-case** | Drives one use case from backlog to a review-ready pull request, following the project's own workflow documents, marking it done in the README backlog, and pausing for approval at every stage boundary. | [docs/implement-use-case.md](docs/implement-use-case.md) |
 
 Each linked page explains what the skill does, when it triggers, how it works,
 and what files it contains.

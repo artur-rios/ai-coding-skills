@@ -21,6 +21,8 @@ workflow documents** rather than a process baked into the skill.
 - Branches, implements the main flow and every alternative flow, tests until the
   suite is actually green, and prepares the pull request — pausing at each
   boundary.
+- Marks the use case done in the README backlog, when the project keeps one, so
+  the status change merges with the implementation.
 - Verifies the Definition of Done from the project's document, not a remembered
   version of it.
 
@@ -55,7 +57,7 @@ do on its own:
 |---|---|---|
 | 1 | Design and plan written | Any code being written |
 | 2 | Implementation complete | Moving to the testing stage |
-| 3 | Full suite green | Opening the pull request |
+| 3 | Full suite green | The README tracking update and the pull request |
 | 4 | You merged and deleted the branch | Closing the issue |
 
 **Exactly one transition is unattended:** marking the work started, right after the
@@ -68,6 +70,26 @@ message.
 **Always yours:** approving the pull request, merging it, and deleting the branch.
 The skill may prepare and push the branch and open the PR once Gate 3 clears —
 that's the boundary. A blanket "just do the whole thing" skips gates, not those.
+
+## README backlog tracking
+
+If your `README.md` mirrors the backlog — the roadmap and backlog tables
+[generate-specs-from-brainstorm](generate-specs-from-brainstorm.md) writes, or any
+equivalent — the skill marks the use case's row done as part of finishing it.
+
+| Behavior | Rule |
+|---|---|
+| Detection | A `Roadmap`/`Backlog` section, a table with issue numbers or `UC-xx` identifiers, a milestone closed-count, or a use case checklist. A feature list or a link to the issues page is not tracking. |
+| Scope of the edit | This use case's row, the milestone's closed count if there is one, and the milestone's status only when this was its last open item. Nothing else. |
+| Done marker | Copied from the file's own convention. If nothing is complete yet, it picks the obvious form for the column and tells you at Gate 3 so you can correct it. |
+| No tracking present | Skipped silently. It will not add a backlog to a README that doesn't have one. |
+| Row missing | Reported, not invented — a use case absent from the backlog means the README is stale or the use case was never planned, and that's yours to decide. |
+
+The change is committed **on the use case's branch**, so it merges with the
+implementation rather than as a direct commit to your base branch. Marking it done
+before the merge isn't premature: the edit is invisible on the base branch until
+the pull request merges, which is the same moment the issue closes. If the pull
+request is abandoned, the README change goes with it.
 
 ## Requirements
 
@@ -109,9 +131,11 @@ and asks, rather than silently picking one.
 7. **Implement** the main flow and every alternative flow.
 8. **Gate 2** → move to the testing status.
 9. **Test until green**, reporting real command output.
-10. **Gate 3** → push and open the pull request, then hand off.
-11. **Gate 4** → close out after you merge.
-12. **Verify** the Definition of Done from the project's document.
+10. **Gate 3**.
+11. **Mark the use case done in the README** — only if the README tracks issues.
+12. **Push and open the pull request**, then hand off.
+13. **Gate 4** → close out after you merge.
+14. **Verify** the Definition of Done from the project's document.
 
 ## Files in this skill
 
@@ -120,6 +144,7 @@ and asks, rather than silently picking one.
 | `SKILL.md` | The procedure, the red flags, and the gate structure. |
 | `references/doc-discovery.md` | Finding the workflow documents, resolving conflicts between them, and the parameter-extraction table. |
 | `references/gate-protocol.md` | What a pause looks like, what never counts as approval, and which actions stay human. |
+| `references/readme-tracking.md` | Detecting a README backlog, which rows to change, and matching the file's own done marker. |
 
 ## What you get back
 

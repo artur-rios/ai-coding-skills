@@ -1,6 +1,6 @@
 ---
 name: implement-use-case
-description: Use when the user wants to implement, build, or start a use case identified by number or name (e.g. "implement UC-03", "start UC-11", "let's do use case 7", "begin the create scope use case"). Drives one use case from backlog to a review-ready pull request by following the project's own workflow documents — loading the specs, refining a design and plan, branching, implementing every flow, testing until green, and preparing the PR — pausing for human approval at every stage boundary. Invoke whenever a message names a use case in an implementation context, even if the word "skill" is never used. Requires the project to have workflow and use case specification documents; stops and says so if they are missing.
+description: Use when the user wants to implement, build, or start a use case identified by number or name (e.g. "implement UC-03", "start UC-11", "let's do use case 7", "begin the create scope use case"). Drives one use case from backlog to a review-ready pull request by following the project's own workflow documents — loading the specs, refining a design and plan, branching, implementing every flow, testing until green, marking the use case done in the README backlog when the README tracks one, and preparing the PR — pausing for human approval at every stage boundary. Invoke whenever a message names a use case in an implementation context, even if the word "skill" is never used. Requires the project to have workflow and use case specification documents; stops and says so if they are missing.
 ---
 
 # Implement a Use Case
@@ -52,6 +52,10 @@ Skip / adapt if:
   the branch are always the human's.
 - "No workflow doc, but the repo clearly uses `feature/*` branches" → NO. Inferred
   process is guessed process. Stop and ask.
+- "The README has no backlog, I'll add one while I'm here" → NO. Update tracking
+  that exists; do not introduce it.
+- "The README row is done, I'll also tidy the other stale rows" → NO. One use
+  case, one row. The rest is someone else's pull request.
 
 | Rationalization | Reality |
 |---|---|
@@ -90,7 +94,9 @@ contradiction and ask which is right.
 
 Pull the branch pattern, base branch, status lifecycle, unattended transition,
 issue tracker, test commands, and Definition of Done from the documents, per
-`doc-discovery.md` §4.
+`doc-discovery.md` §4. Check there too whether the repository's `README.md`
+tracks issues — a roadmap or backlog table — and note the exact row for this use
+case and the marker the file uses for done work.
 
 Report what you found and where. A misread parameter is cheapest to fix now.
 
@@ -161,18 +167,38 @@ it in this session and read the result.
 
 ### 10. **Gate 3** — before the pull request
 
-Stop and ask. On approval, push the branch and open a pull request into the base
-branch, following the project's description convention so the merge closes the
-issue.
+Stop and ask.
+
+### 11. Mark the use case done in the README — only if the README tracks issues
+
+On Gate 3 approval, and **before** opening the pull request, update the
+repository's `README.md` tracking so the merge carries the status change with the
+implementation, per [references/readme-tracking.md](references/readme-tracking.md).
+
+If the README has no issue tracking, skip this step silently. Do not add tracking
+to a README that does not have it — that is a different piece of work, and not one
+you were asked to do.
+
+Commit the README change on the same branch. It lands on the base branch only when
+the pull request merges, which is the same moment the issue actually closes.
+
+### 12. Open the pull request
+
+Push the branch and open a pull request into the base branch, following the
+project's description convention so the merge closes the issue.
 
 Then hand off. **Do not review, approve, merge, or delete the branch.**
 
-### 11. **Gate 4** — after the human merges
+### 13. **Gate 4** — after the human merges
 
 When the user confirms the merge and branch deletion, ask before closing out, then
 move the issue to done and confirm it is closed.
 
-### 12. Verify the Definition of Done
+Confirm the README tracking landed with the merge. If it did not — the step was
+skipped, or the row was edited on the base branch meanwhile — say so and ask
+before changing the README outside a pull request.
+
+### 14. Verify the Definition of Done
 
 Walk the Definition of Done checklist **from the project's Development Workflow
 Document** — not a remembered version of it — and confirm each item against
@@ -184,7 +210,7 @@ evidence. Report any item that does not hold.
 |---|---|---|
 | 1 | Design and plan written | Any code being written |
 | 2 | Implementation complete | Moving to the testing stage |
-| 3 | Full suite green | Opening the pull request |
+| 3 | Full suite green | The README tracking update and the pull request |
 | 4 | Human merged and deleted the branch | Closing the issue |
 
 **The only unattended transition** is marking the work started, right after the
@@ -200,6 +226,7 @@ branch is created.
 | `FR-xx`, data model, authorization | System Requirements Document |
 | Test structure, naming, coverage | Testing Specification Document |
 | Libraries and versions | Technology Stack Document |
+| Whether the backlog is mirrored in the README, and how done is marked | The repository's `README.md` |
 
 ## Common Mistakes
 
@@ -217,3 +244,9 @@ branch is created.
 - **Guessing at a dangling requirement reference** instead of asking.
 - **Handling several use cases in one invocation.** One use case, one branch, one
   issue, one pull request.
+- **Leaving the README backlog stale** when the project keeps one. The tracker and
+  the README disagreeing is how a backlog stops being trusted.
+- **Adding backlog tracking to a README that has none**, or restructuring the
+  tables of one that does.
+- **Committing the README update straight to the base branch.** It belongs on the
+  use case's branch, inside the pull request.

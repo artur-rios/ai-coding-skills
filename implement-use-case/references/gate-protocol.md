@@ -69,10 +69,19 @@ result. If tests were skipped, filtered, or excluded, say which and why.
 
 Opening a pull request is outward-facing and hard to retract. It waits for a yes.
 
+Approval here also clears the README tracking update, since that change ships
+inside the same pull request. Say at this gate whether the README tracks issues
+and which row you will mark — including the marker you chose when the file has no
+completed row to copy.
+
 ### Gate 4 — after the human merges, before closing out
 
 The user reviews, merges, and deletes the branch. You do none of those. When they
 confirm the merge, ask before moving the issue to done and closing it.
+
+Confirm the README tracking landed with the merge. If it did not, report it and
+ask — editing the README outside a pull request is a change to the base branch,
+and that is the user's call.
 
 ## Actions that are always the human's
 
