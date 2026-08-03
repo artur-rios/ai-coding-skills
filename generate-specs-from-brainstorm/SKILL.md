@@ -337,8 +337,9 @@ Only after approval, and following
 [references/github-backlog.md](references/github-backlog.md) §3:
 
 1. Preflight `gh auth status` and `gh repo view`. If `gh` is missing, not
-   authenticated, or there is no GitHub remote, **stop and report it** — the
-   README roadmap stands as the plan. Do not improvise another tracker.
+   authenticated, there is no GitHub remote, or Phase 1 recorded a non-GitHub
+   host, **stop and report it** — the README roadmap stands as the plan. Do not
+   improvise another tracker's API.
 2. List existing milestones and issues. Anything whose title already exists is
    **skipped, not recreated** — re-running must not duplicate.
 3. Create the milestones in `M-xx` order, then the foundation issue, then the use

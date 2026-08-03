@@ -13,8 +13,8 @@ Generates two deliverables for the current NuGet library project:
    commands, usage examples, and the fixed **Versioning**, **Build, test and publish**, and **Legal**
    sections (see below for which are conditional).
 2. A **Hugo docs site** under `docs/` using the `re-terminal` theme fork as a submodule,
-   plus a **GitHub Actions workflow** (`.github/workflows/build-docs-and-coverage-report.yml`) that
-   builds the site and deploys it to GitHub Pages.
+   plus a **GitHub Actions workflow** under `.github/workflows/` that builds the site and deploys it
+   to GitHub Pages.
 
 Author identity (name, email, site, copyright holder) is resolved from the project's git configuration
 at runtime — nothing is hardcoded. See `references/identity.md` for exactly how each value is obtained;
@@ -22,21 +22,72 @@ only the repo name and project-specific content change per project.
 
 **Core principle:** ask only what can't be inferred; infer everything else from the project itself.
 
-## When to use
+## When to Use
 
-Use this when the repo is a **.NET library distributed as NuGet package(s)** — i.e. it has a `*.sln`
-or `*.csproj` and at least one packable project (`<IsPackable>true</IsPackable>`, an explicit
-`<PackageId>`, or a project that is clearly published to nuget.org).
+**Precondition: the repo is a .NET library that ships at least one NuGet package.** Verify it with the
+detection below before writing anything.
 
 If the project is .NET but ships no packages (an app, a service, a sample), or is not .NET at all, say
 so and ask whether to proceed anyway — the package table, NuGet badges and install commands won't apply,
 and the rest of the workflow (README overview + Hugo site + Pages workflow) still works if the user
-wants it.
+wants it. Do not add `<PackageId>` to a project to make this skill fit; that is the user's decision.
 
 Related: `create-nuget-publish-workflow` generates the *publishing* CI for the same kind of project;
 this skill only writes documentation.
 
-## Workflow
+### What counts as a packable project
+
+*(This rule is shared verbatim with `create-nuget-publish-workflow` so the two skills never disagree
+about what a repository ships. Change it in both or neither.)*
+
+A `.csproj` ships a NuGet package when it **opts in** and is **not excluded**:
+
+| | Signal |
+|---|---|
+| **Opts in** | An explicit `<PackageId>`, or `<IsPackable>true</IsPackable>`, or `<GeneratePackageOnBuild>true</GeneratePackageOnBuild>` |
+| **Excluded** | `<IsPackable>false</IsPackable>`; a test project (references `Microsoft.NET.Test.Sdk`); an executable (`<OutputType>Exe</OutputType>`) that has no `<PackageId>` |
+
+An executable *with* a `<PackageId>` is legitimate — that is how .NET tools ship — so do not exclude it
+on `OutputType` alone.
+
+Detect from the **repository root**, not just `src/` — not every repo has one:
+
+```bash
+grep -rl -e "<PackageId>" -e "<IsPackable>true</IsPackable>" \
+        -e "<GeneratePackageOnBuild>true</GeneratePackageOnBuild>" \
+        --include=*.csproj . | sort
+```
+
+Then read each match and drop the ones the exclusion column catches.
+
+**The package id** is the `<PackageId>` when set; otherwise it defaults to the assembly name, which
+defaults to the project file name. Read it — never infer it from the folder name.
+
+## Red Flags — STOP and Re-read the Procedure
+
+- "I'll write a plausible usage example and refine it later" → NO. Read the real API.
+  A wrong example is worse than none — it is the first thing a reader copies.
+- "The folder is `src/Acme.Http`, so the package is `Acme.Http`" → Usually, but read
+  `<PackageId>`. A wrong `dotnet add package` line is a broken install.
+- "The test project has no `IsPackable`, so it's part of the family" → NO. Apply the
+  packable rule; test, sample and app projects are not packages.
+- "This repo has no package, but the docs would still be nice" → Say so and ask
+  first. Do not add `<PackageId>` to make the skill fit.
+- "There's a README already, I'll rewrite it properly" → NO. Diff it mentally and
+  preserve what was hand-written; confirm before replacing substance.
+- "The Hugo site exists, so CI must exist too" → Check. A repo can have a site and
+  no workflow, and the workflow step runs either way.
+- "The versions belong in the README too, for convenience" → NO. The Technology
+  Stack Document owns versions; everything else links to it.
+
+| Rationalization | Reality |
+|---|---|
+| "The user will notice if an example is wrong" | They will notice it failed, after pasting it. Read the entry points and write something that compiles. |
+| "SemVer is the obvious default, no need to ask" | Versioning policy is a promise to consumers. Ask; omit the section if the answer is no. |
+| "`submodules: recursive` is a detail" | Without it the theme is absent on CI and the docs build fails — every time, only in CI. |
+| "One page per package is over-engineering for a small library" | Then it is a single-package library and one page is right. Let the package count decide, not the mood. |
+
+## Procedure
 
 Create a todo per step.
 
@@ -47,7 +98,7 @@ Gather these facts before asking anything:
 | Fact | How to detect |
 |---|---|
 | Repo name | `git remote get-url origin` → last path segment without `.git`. Used in Pages URL and GitHub links. |
-| Packable projects | Every `*.csproj` that is packable — no `<IsPackable>false</IsPackable>`, and ideally a `<PackageId>`. This is the package family. |
+| Packable projects | Every `*.csproj` matching the rule in **When to use** above. This is the package family. |
 | Package ids | `<PackageId>` per packable project, falling back to the assembly/project name. Used for badges and `dotnet add package`. |
 | Target framework(s) | `<TargetFramework>` / `<TargetFrameworks>` — states the runtime requirement in Installation. |
 | Existing LICENSE? | `LICENSE` / `LICENSE.md` / `LICENSE.txt` at root. |
@@ -107,10 +158,13 @@ scratch — follow `references/hugo-setup.md` exactly (init site, add the theme 
 
 ### 7. Create the GitHub Actions workflow (always)
 
-Write `.github/workflows/build-docs-and-coverage-report.yml` — the same workflow this skill's source
-project uses: on push to `main` touching `docs/**` (and `workflow_dispatch`), it checks out with
-`submodules: recursive`, sets up Hugo Extended, builds `docs/`, and deploys `docs/public` to the
+Write the Pages workflow: on push to `main` touching `docs/**` (and `workflow_dispatch`), it checks out
+with `submodules: recursive`, sets up Hugo Extended, builds `docs/`, and deploys `docs/public` to the
 `gh-pages` branch. Use the verbatim YAML in `references/hugo-setup.md` step 6, filling `<owner>`/`<repo>`.
+
+Name the file for what it does: `build-docs-and-coverage-report.yml` when the solution publishes a
+coverage report into the site, `build-docs.yml` when it does not. The file name and the workflow's
+`name:` must agree.
 
 **Ensure this file exists even when the docs site already existed** — a repo can have a Hugo site but no
 CI. If the file is already present and correct, leave it; if it's missing or stale, create/fix it.
@@ -122,22 +176,41 @@ why, and the two commands to preview (`hugo -s docs server`) and to finish wirin
 (`git submodule update --init`). Remind the user to enable GitHub Pages (Settings → Pages → deploy from
 the `gh-pages` branch) if this is the repo's first docs deploy.
 
-## Reference files
+## Quick Reference
 
-- `references/identity.md` — hardcoded author/links/URLs. Use verbatim.
+| Question | Answer |
+|---|---|
+| Is the repo in scope? | At least one packable project. None → say so and ask. |
+| What is asked? | SemVer, license (only if none exists), mermaid diagrams. Nothing else. |
+| What is never asked? | The overview content and the page split — decide those. |
+| One page or many? | One per package for a family; one total for a single package. |
+| Where do versions live? | The Technology Stack Document only. Everything links to it. |
+| Who owns identity? | `references/identity.md`, resolved from git — never hardcoded. |
+
+### Conditional README sections
+
+| Section | Included when |
+|---|---|
+| Versioning | The user uses semantic versioning |
+| Build, test and publish | Always — the project is a .NET library |
+| Legal | A license exists or was just created |
+
+### Reference files
+
+- `references/identity.md` — how author/links/URLs are resolved from git. Use verbatim.
 - `references/readme-template.md` — README skeleton and tone.
 - `references/fixed-sections.md` — verbatim Versioning / Build-test-publish / Legal blocks.
 - `references/hugo-setup.md` — Hugo site + theme submodule + Pages workflow.
 - `references/mermaid-types.md` — common diagram types to offer, with examples.
 - `references/licenses.md` — how to fetch/fill license text.
 
-## Common mistakes
+## Common Mistakes
 
 - **Inventing usage examples.** Read the real code first; a wrong example is worse than none.
 - **Guessing package ids from folder names.** Read `<PackageId>` from the csproj; the folder and the
   published id often differ, and a wrong `dotnet add package` line is a broken install.
 - **Listing non-packable projects as packages.** Test, sample and app projects are not part of the
-  package family — check `<IsPackable>` before adding a row or a badge.
+  package family — apply the packable rule before adding a row or a badge.
 - **Including Versioning when the user isn't using SemVer.** Skip it entirely; don't water it down.
 - **Overwriting an existing README without confirming.** Diff mentally; preserve anything hand-written.
 - **Forgetting `submodules: recursive` in the Pages workflow** — the theme won't be there on CI and the

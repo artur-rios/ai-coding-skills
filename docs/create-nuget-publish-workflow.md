@@ -10,13 +10,21 @@ picks one of two strategies based on how many packable projects the solution has
 
 | Strategy | When | Tag format | Extras |
 |---|---|---|---|
-| **Single-package** | Exactly one publishable project | any version tag — `1.2.3` or `v1.2.3` | none |
-| **Multi-package** | More than one publishable project | `<PackageId>@<version>` | copies `scripts/release.py` helper |
+| **Single-package** | Exactly one packable project | any version tag — `1.2.3` or `v1.2.3` | none |
+| **Multi-package** | More than one packable project | `<PackageId>@<version>` | copies `scripts/release.py` helper |
 
-A project counts as **publishable** when its `.csproj` contains a `<PackageId>`
-element. Test projects, samples, and internal libraries that omit `<PackageId>`
-are excluded — so a repo with one library plus several test projects is still
-*single-package*.
+A project counts as **packable** when it opts in — an explicit `<PackageId>`,
+`<IsPackable>true</IsPackable>`, or `<GeneratePackageOnBuild>true</GeneratePackageOnBuild>`
+— and isn't excluded as an `<IsPackable>false</IsPackable>` project, a test project,
+or an executable without a package id. So a repo with one library plus several test
+projects is still *single-package*. The same rule lives verbatim in
+[generate-nuget-lib-docs](generate-nuget-lib-docs.md), so the two skills never
+disagree about what a repository ships.
+
+The **multi-package** strategy additionally needs an explicit `<PackageId>` per
+project, because its tags are `<PackageId>@<version>`. A project that packs under
+the default id is packable but not addressable — the skill says so and asks you to
+set the id rather than guessing one.
 
 ## When to use it
 
@@ -25,14 +33,18 @@ Ask for it when you want to:
 - "publish to NuGet" / "add a release or publish workflow"
 - "set up the GitHub Action to publish the package(s)"
 
-Skip it if the repo is not .NET, does not use the `src/<Project>/…csproj` layout,
-or publishes somewhere other than NuGet / GitHub Packages.
+**It requires a repository that actually ships a package.** If nothing is packable,
+it stops and says so rather than generating a workflow with nothing to publish —
+making a project packable is your decision, not its.
+
+Skip it if the repo publishes somewhere other than NuGet / GitHub Packages.
 
 ## How it works
 
-1. **Analyze the repo.** Detects publishable projects (`grep -rl "<PackageId>"
-   --include=*.csproj src`) and reads each one for `<PackageId>`, `<Version>`,
-   `<RepositoryUrl>`, and `<TargetFramework>` (to choose the SDK version glob).
+1. **Analyze the repo.** Detects packable projects from the repository root — not
+   just `src/`, since not every repo has one — and reads each for `<PackageId>`,
+   `<Version>`, `<RepositoryUrl>`, and `<TargetFramework>` (to choose the SDK
+   version glob). Stops here if nothing is packable.
 2. **Count them** to pick single- vs. multi-package.
 3. **Write the workflow** from the matching template in `templates/`, filling the
    `__UPPER_CASE__` placeholders.
@@ -43,6 +55,17 @@ Both jobs otherwise behave identically: checkout the tag → set up .NET → val
 the tag version against the csproj `<Version>` → restore → pack (Release) →
 `dotnet nuget push` to nuget.org then GitHub Packages, each with
 `--skip-duplicate`.
+
+## What it refuses to do
+
+| Temptation | What the skill does instead |
+|---|---|
+| Add `<PackageId>` so there's something to publish | Stops and asks — making a project packable is a release decision |
+| Count test projects toward the strategy | Excludes them; one library plus three test projects is *single-package* |
+| Use multi-package "for flexibility" | Lets the count decide; one package gets the simpler tag flow |
+| Hardcode the SDK version | Derives it from `<TargetFramework>` |
+| Infer the package id from the folder name | Reads `<PackageId>` — a guessed id produces tags nothing responds to |
+| Skip `release.py` as mere ergonomics | Copies it; it is what makes per-package tagging usable, and it pushes tags one at a time on purpose |
 
 ## Files in this skill
 

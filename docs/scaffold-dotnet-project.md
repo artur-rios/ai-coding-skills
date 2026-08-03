@@ -27,6 +27,11 @@ Skip it if you're **adding** a project to an existing solution — follow that
 solution's own conventions instead. This skill creates a whole new solution from
 an empty (or intended-to-be-empty) directory.
 
+Before asking anything, it checks the directory. If a `.sln` or `.csproj` is
+already there it stops; if any file it would write — `README.md`, `LICENSE`,
+`.editorconfig`, `.gitignore`, `.wakatime-project` — already exists, it names them
+and asks per file before overwriting. Nothing is clobbered silently.
+
 ## The core rule
 
 > Collect every answer first, then scaffold in one shot.
@@ -91,23 +96,26 @@ file lives in **`src/`**, not the repo root, and it is created with
 
 `Application/`, `Infrastructure/`, and `tests/` are **empty scaffolding
 directories** — no extra `.csproj` files, no `Commands/` or `Entities/`
-subfolders. You add those as the project grows.
+subfolders. You add those as the project grows. Each gets a `.gitkeep`, because
+git doesn't track directories and the layout would otherwise disappear on your
+first commit.
 
 ## How it works
 
-1. **Ask** all six questions (plus license follow-ups) before creating anything.
-2. **Create** `docs/` and `tests/`.
-3. **Run** `dotnet new <template>` for the main project.
-4. **In DDD mode**, run `dotnet new classlib` for the Domain project and add a
+1. **Check** the directory is safe to scaffold into; stop or ask if it isn't.
+2. **Ask** all six questions (plus license follow-ups) before creating anything.
+3. **Create** `docs/` and `tests/`.
+4. **Run** `dotnet new <template>` for the main project.
+5. **In DDD mode**, run `dotnet new classlib` for the Domain project and add a
    project reference from the presentation project to it.
-5. **Create** the solution with `dotnet new sln --format sln -o src` and add every
+6. **Create** the solution with `dotnet new sln --format sln -o src` and add every
    project to it.
-6. **In DDD mode**, create the empty `src/Application` and `src/Infrastructure`
-   directories.
-7. **Copy** all three files from `references/` into the repo root.
-8. **Write** `README.md` and `LICENSE`.
-9. **Build** with `dotnet build` to verify the scaffold, then report the template
-   used, the layout created, the license chosen, and the build result.
+7. **In DDD mode**, create the empty `src/Application` and `src/Infrastructure`
+   directories, and drop a `.gitkeep` into every empty folder.
+8. **Copy** all three files from `references/` into the repo root.
+9. **Write** `README.md` and `LICENSE`.
+10. **Build** with `dotnet build` to verify the scaffold, then report the template
+    used, the layout created, the license chosen, and the build result.
 
 ## Files in this skill
 

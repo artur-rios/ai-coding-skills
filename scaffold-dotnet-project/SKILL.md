@@ -1,6 +1,6 @@
 ---
 name: scaffold-dotnet-project
-description: Use when the user wants to create or scaffold a new .NET project or solution from scratch in the current directory — running `dotnet new` with the right template, picking folder structure (DDD or basic), and creating docs/src/tests layout with README and LICENSE. Triggers on "scaffold a .NET project", "create a new dotnet solution", "bootstrap a .NET project", "start a new C# project".
+description: Use when the user wants to create or scaffold a new .NET project or solution from scratch in an empty or greenfield directory — running `dotnet new` with the right template, picking folder structure (DDD or basic), and creating docs/src/tests layout with README and LICENSE. Triggers on "scaffold a .NET project", "create a new dotnet solution", "bootstrap a .NET project", "start a new C# project". Not for adding a project to an existing solution: it stops if the directory already contains a `.sln` or `.csproj`, and asks before overwriting any file it would write.
 ---
 
 # Scaffold .NET Project
@@ -21,6 +21,9 @@ basic mode. The Application and Infrastructure folders are empty scaffolding
 directories — no extra `.csproj` projects beyond those specified.
 
 ## When to Use
+
+**Precondition: the target directory holds no .NET solution and none of the files
+this skill writes.** Check before asking anything (step 0).
 
 - The user asks to "scaffold / create / bootstrap / start a new .NET project or
   solution".
@@ -46,6 +49,11 @@ Skip / adapt if:
   empty scaffolding — no extra `dotnet new` calls.
 - "The solution name doesn't need the prefix" → If the user gave a prefix, it
   goes in the solution name too.
+- "There's already a README here, mine is better" → NO. Step 0 asks before
+  overwriting anything. A scaffold that destroys existing work is not recoverable
+  outside git.
+- "A `.gitkeep` counts as adding files to the empty folders" → It is not a
+  subdirectory and not a project; it is the only way git keeps the folder. Add it.
 
 | Rationalization | Reality |
 |---|---|
@@ -57,6 +65,27 @@ Skip / adapt if:
 ## Procedure
 
 Create a todo per step. **Collect every answer before touching `dotnet new`.**
+
+### 0. Check the directory is safe to scaffold into
+
+This skill writes `README.md`, `LICENSE`, `.editorconfig`, `.gitignore`, and
+`.wakatime-project` at the repo root. **Overwriting any of them loses the user's
+work**, so look before asking anything:
+
+```bash
+ls -a
+find . -name "*.sln" -o -name "*.slnx" -o -name "*.csproj" -not -path "./.git/*"
+```
+
+- **A solution or project already exists** → this is not a greenfield directory.
+  Stop, say what you found, and point at the two alternatives in *Skip / adapt*.
+- **Any file this skill writes already exists** → name each one and ask whether to
+  overwrite it or keep it, before the interview starts. Honour the answer per file;
+  keeping an existing `LICENSE` also means skipping the license question.
+- **Directory is empty or has unrelated files** → proceed.
+
+Never overwrite silently. A scaffold that ate a hand-written README is not a
+scaffold the user can undo without git.
 
 ### 1. Project type — match the user's description to a `dotnet new` template
 
@@ -166,7 +195,7 @@ dotnet sln src/<Prefix.>SolutionName.sln add src/Domain/<Prefix.>ProjectName.Dom
 # 5. Add project reference from WebApi to Domain
 dotnet add src/Presentation/<Prefix.>ProjectName.WebApi/<Prefix.>ProjectName.WebApi.csproj reference src/Domain/<Prefix.>ProjectName.Domain/<Prefix.>ProjectName.Domain.csproj
 
-# 6. Create empty DDD scaffolding directories
+# 6. Create empty DDD scaffolding directories (bash; see step 7 for PowerShell)
 mkdir -p src/Application
 mkdir -p src/Infrastructure
 ```
@@ -216,19 +245,31 @@ Ask: *"Which license? Options: MIT, AGPL, or Custom Commercial."*
 ### 7. Scaffold — execute in this exact order
 
 1. Create `docs/` and `tests/` directories at the repo root.
-2. Run `dotnet new <template> …` to create the WebApi project.
+2. Run `dotnet new <template> …` to create the main project — in DDD mode that is
+   the presentation project under `src/Presentation/`, in basic mode the single
+   project under `src/`.
 3. If DDD mode, run `dotnet new classlib …` to create the Domain project, then
-   add a project reference from WebApi to Domain with `dotnet add … reference …`.
+   add a project reference from the presentation project to Domain with
+   `dotnet add … reference …`.
 4. Run `dotnet new sln --format sln …` and `dotnet sln … add …` to wire up the solution.
 5. If DDD mode, create the empty scaffolding directories (`src/Application`,
    `src/Infrastructure`).
-6. Copy **all files** from `references/` in this skill's directory into the repo
+6. Put a `.gitkeep` in every empty directory (`tests/`, `docs/` if nothing else
+   lands there, and in DDD mode `src/Application` and `src/Infrastructure`).
+   **Git does not track directories** — without this the layout you just built
+   disappears on the first commit, and the next clone has no `tests/` at all.
+7. Copy **all files** from `references/` in this skill's directory into the repo
    root: `.editorconfig`, `.gitignore`, and `.wakatime-project`. These files are
-   always included in every scaffolded project.
-7. Write `README.md` with project name, description, build instructions
+   always included in every scaffolded project — subject to the overwrite answers
+   from step 0.
+8. Write `README.md` with project name, description, build instructions
    (`dotnet build`, `dotnet test`), and license reference.
-8. Write `LICENSE` per the user's choice.
-9. Run `dotnet build src/<Prefix.>SolutionName.sln` to verify the scaffold builds.
+9. Write `LICENSE` per the user's choice.
+10. Run `dotnet build src/<Prefix.>SolutionName.sln` to verify the scaffold builds.
+
+Directory creation is shell-specific — `mkdir -p src/Application` in bash,
+`New-Item -ItemType Directory -Force src/Application` in PowerShell. Use whichever
+shell you are actually running; `mkdir -p` is not valid PowerShell.
 
 ### 8. Report
 
@@ -251,6 +292,10 @@ Tell the user:
 
 ## Common Mistakes
 
+- **Scaffolding into a directory that already has a solution or a README.**
+  Step 0 exists to catch that. Ask before overwriting anything.
+- **Leaving the empty directories without a `.gitkeep`.** They vanish on the first
+  commit, and the layout the user asked for is gone.
 - **Scaffolding before asking all questions.** Never run `dotnet new` until every
   answer is collected.
 - **Creating multiple `dotnet new` projects for DDD layers.** In DDD mode,

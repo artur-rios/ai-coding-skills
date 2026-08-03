@@ -1,6 +1,6 @@
 ---
 name: create-unit-tests
-description: Use when the user wants to generate unit tests for a target project, class, module, or function — every test is named with the Given-When-Then pattern (GivenSomeCondition_WhenSomeAction_ThenSomeOutput) and coverage includes happy paths plus edge cases. Triggers on "write unit tests", "add tests for", "create tests", "cover this with tests", "unit test this".
+description: Use when the user wants to generate unit tests for a target project, class, module, or function — tests are named with the Given-When-Then pattern (GivenSomeCondition_WhenSomeAction_ThenSomeOutput) unless the project documents its own convention, which wins, and coverage includes happy paths plus edge cases. Triggers on "write unit tests", "add tests for", "create tests", "cover this with tests", "unit test this".
 ---
 
 # Create Unit Tests
@@ -27,6 +27,23 @@ so the suite is driven by a scenario list, not by whatever came to mind first.
 Skip / adapt if the user wants integration, end-to-end, or performance tests — the
 Given-When-Then naming still helps, but the scenario taxonomy below is aimed at
 unit-level behavior.
+
+### When the project already has a testing standard
+
+Given-When-Then is this skill's default, **not an override of the project's own
+convention.** If the repository documents one — a `Testing Specification Document`,
+a `CONTRIBUTING.md` section, or an established pattern visible in the existing
+tests — follow it, and say which you followed and why.
+
+Raise the conflict rather than resolving it silently:
+
+> "The Testing Specification names tests `Method_Scenario_Expected`; this skill
+> defaults to Given-When-Then. I'll follow the project's convention unless you'd
+> rather switch."
+
+A repository whose tests use two naming schemes is worse off than one using the
+scheme you disagree with. This matters most when `implement-use-case` delegates the
+unit layer here — there, the project's Testing Specification governs, always.
 
 ## The Given-When-Then Naming Rule
 
@@ -56,13 +73,42 @@ Python, Ruby), use the same three parts as the description text, e.g.
 `it("Given empty cart, when checkout is called, then throws")` or
 `def test_given_empty_cart_when_checkout_called_then_raises():`.
 
+## Red Flags — STOP and Re-read the Procedure
+
+- "I'll write the happy-path tests now and add edge cases after review" → NO. The
+  edge cases *are* the deliverable; a happy-path suite proves almost nothing.
+- "I'll list the scenarios as I write them" → NO. Enumerate first (step 3), or
+  coverage becomes whatever you happened to think of.
+- "This method is obviously a getter, I don't need to read it" → NO. A test written
+  from an assumed API passes against the wrong behavior.
+- "The test fails, so my assertion must be wrong" → Maybe the code is. Investigate,
+  and report a real defect instead of editing the assertion until it agrees.
+- "One test can assert both outcomes" → NO. One observable outcome per test, or the
+  failure message stops telling you what broke.
+- "I'll mock the class under test so I can isolate this method" → NO. Mock
+  collaborators only; mocking the unit tests the mock.
+- "The project uses MSTest but xUnit is better" → NO. Match the project.
+- "The suite should pass now" → Run it. Report real numbers, never expected ones.
+
+| Rationalization | Reality |
+|---|---|
+| "Enumerating scenarios first is bureaucracy" | It is what makes coverage reviewable *before* forty tests exist along the wrong axis. |
+| "A loop over inputs is DRYer than twelve cases" | A loop that computes the expected value can agree with a wrong implementation. Use data-driven cases with literal expectations. |
+| "Given-When-Then names are too long" | The name is the failure message. `GivenN_WhenX_ThenY` tells you nothing when the build breaks at 3am. |
+| "The user asked for tests, not a bug report" | A test suite that hides a defect to stay green is worse than no suite. Report what you found. |
+| "This edge case can't happen in practice" | Then it costs one cheap test to prove it. "Can't happen" is how nulls reach production. |
+
 ## Procedure
 
 Create a todo per step.
 
-### 1. Identify the target and the test framework
+### 1. Identify the target, the test framework, and the naming convention
 
 - Confirm what to test: a whole project, or a specific class/module/function.
+- Check for a project testing standard (`Testing Specification Document`,
+  `CONTRIBUTING.md`, or the naming already used by existing tests). It wins over
+  this skill's Given-When-Then default — see *When the project already has a
+  testing standard* above.
 - Detect the existing test stack so the new tests fit in:
   - **.NET** — look for `*.Tests.csproj`, and xUnit / NUnit / MSTest package refs.
   - **JS/TS** — `jest`, `vitest`, `mocha` in `package.json`.
@@ -112,9 +158,29 @@ the assertion to match buggy output.**
 
 ### 6. Report to the user (required)
 
-Give an overview of what was done (see **Overview to Deliver** below).
+Tell the user:
 
-## Edge-Case Checklist
+- **Target** — what was tested (project / class / module), the framework used, and
+  the naming convention followed if it was not Given-When-Then.
+- **Scenario list** — the behaviors and edge cases covered, grouped by unit.
+- **Result** — the pass/fail output of the test run (actual numbers, from the run
+  you performed in this session).
+- **Gaps & findings** — anything not covered and why, plus any real defects or
+  ambiguities the tests surfaced in the code under test.
+
+## Quick Reference
+
+| Decision | Rule |
+|---|---|
+| Test naming | Given-When-Then, unless the project documents its own convention — that wins. |
+| Framework | The project's existing one. Never introduce a second. |
+| Scenario list | Written before the first test, not discovered while writing. |
+| Assertions per test | One observable outcome. Two means two tests. |
+| Mocks | External collaborators only, never the unit under test. |
+| A failing test | Investigate before editing. A real defect gets reported, not hidden. |
+| Claiming green | Only after running the suite in this session and reading the output. |
+
+### Edge-case checklist
 
 Quick trigger list — expand with [references/edge-cases.md](references/edge-cases.md):
 
@@ -129,7 +195,7 @@ Quick trigger list — expand with [references/edge-cases.md](references/edge-ca
 | Dependencies | What if a mock throws, returns null, or times out? |
 | State | Called twice — idempotent? Mutation leaking out? |
 
-## Example (C# / xUnit)
+### Example (C# / xUnit)
 
 A complete, runnable example is in
 [references/example-xunit.md](references/example-xunit.md). Shape:
@@ -162,22 +228,14 @@ public class CartServiceTests
 }
 ```
 
-## Overview to Deliver
-
-After implementing, tell the user:
-
-- **Target** — what was tested (project / class / module) and the framework used.
-- **Scenario list** — the behaviors and edge cases covered, grouped by unit.
-- **Result** — the pass/fail output of the test run (actual numbers).
-- **Gaps & findings** — anything not covered and why, plus any real defects or
-  ambiguities the tests surfaced in the code under test.
-
 ## Common Mistakes
 
 - **Only testing the happy path.** The requirement is exhaustive — work the
   edge-case checklist for every unit.
 - **Breaking the naming rule.** Not three segments, missing `Given`/`When`/`Then`,
   or two behaviors crammed into one `Then`.
+- **Imposing Given-When-Then on a project that documents another convention.**
+  Follow the project's; say which you followed.
 - **Guessing behavior.** A test written from an assumed API is worse than no test —
   read the real code first.
 - **Assertion-free or logic-heavy tests.** Every test asserts one literal outcome;

@@ -12,8 +12,8 @@ It produces two deliverables:
    install commands, followed by fixed **Versioning**, **Build, test and
    publish**, and **Legal** sections.
 2. A **Hugo docs site** under `docs/` using the `re-terminal` theme fork as a git
-   submodule, plus `.github/workflows/build-docs-and-coverage-report.yml`, which
-   builds the site and deploys it to GitHub Pages.
+   submodule, plus a GitHub Actions workflow that builds the site and deploys it
+   to GitHub Pages.
 
 Author identity (name, email, site, copyright holder) is resolved from the
 project's git configuration at runtime — nothing is hardcoded.
@@ -25,8 +25,12 @@ the project itself.
 
 Ask for it with phrases like "generate docs", "create documentation", "make a
 readme and docs site", or "document this project" **in a .NET repository with at
-least one packable project** (`<IsPackable>true</IsPackable>`, an explicit
-`<PackageId>`, or a project clearly published to nuget.org).
+least one packable project** — one that opts in with `<PackageId>`,
+`<IsPackable>true</IsPackable>`, or `<GeneratePackageOnBuild>`, and isn't a test
+project, an `<IsPackable>false</IsPackable>` project, or an executable without a
+package id. The same rule lives verbatim in
+[create-nuget-publish-workflow](create-nuget-publish-workflow.md), so the two
+skills always agree on what a repository ships.
 
 If the project ships no packages — an app, a service, a sample — the skill says
 so and asks before continuing: the package table, badges and install commands
@@ -62,6 +66,17 @@ For the *publishing* CI of the same kind of project, see
 | **Build, test and publish** | Always — the project is a .NET library. |
 | **Legal** | A license exists or was just created. |
 
+## What it refuses to do
+
+| Temptation | What the skill does instead |
+|---|---|
+| Write a plausible usage example | Reads the real entry points — a wrong example is the first thing a reader copies |
+| Infer the package id from the folder name | Reads `<PackageId>`; a wrong `dotnet add package` line is a broken install |
+| Treat every csproj as part of the package family | Applies the packable rule; tests, samples and apps are excluded |
+| Add `<PackageId>` so the skill applies | Says the repo ships nothing and asks |
+| Rewrite an existing README wholesale | Preserves what was hand-written and confirms before replacing substance |
+| Restate versions in the README | Links to the Technology Stack Document, which owns them |
+
 ## Files in this skill
 
 | Path | Purpose |
@@ -74,12 +89,10 @@ For the *publishing* CI of the same kind of project, see
 | `references/mermaid-types.md` | Common diagram types to offer, with examples. |
 | `references/licenses.md` | How to fetch and fill license text. |
 
-## Common mistakes it avoids
+## What you get back
 
-- Inventing usage examples — it reads the real code first.
-- Guessing package ids from folder names instead of reading `<PackageId>`.
-- Listing test, sample or app projects as published packages.
-- Including the SemVer-only section where it doesn't apply.
-- Overwriting a hand-written README without confirming.
-- Forgetting `submodules: recursive` in the Pages workflow (the theme would be
-  missing on CI and the build would fail).
+A README written from the real API — package table, NuGet badges, working
+`dotnet add package` lines — a Hugo site with a page per package, a Pages workflow
+that actually builds (`submodules: recursive` included, without which the theme is
+missing on CI every time), and a report naming which conditional sections were
+included and why.

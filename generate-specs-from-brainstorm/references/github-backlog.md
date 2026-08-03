@@ -157,6 +157,12 @@ If `gh` is missing, unauthenticated, or the repository has no GitHub remote:
 the plan the user creates by hand later. This is a reported outcome, not a
 failure to work around.
 
+The same applies when Phase 1 recorded a **non-GitHub host** — GitLab, Azure
+DevOps, Jira. The milestone grouping and the README roadmap are host-agnostic and
+still apply; only this section's `gh` commands do not. Say which tracker the
+documents named and leave the creation to the user rather than improvising an API
+you have not been asked to use.
+
 ### Check what already exists — always, before creating anything
 
 ```bash

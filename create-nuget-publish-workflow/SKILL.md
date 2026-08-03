@@ -1,6 +1,6 @@
 ---
 name: create-nuget-publish-workflow
-description: Use when adding or generating a GitHub Actions workflow that publishes a .NET project's NuGet package(s) to nuget.org and GitHub Packages — a tag-triggered publish-package.yml. Picks the single-package (simple tag) or multi-package (PackageId@version tag + release.py) strategy based on how many packable projects the solution has.
+description: Use when adding or generating a GitHub Actions workflow that publishes a .NET library's NuGet package(s) to nuget.org and GitHub Packages — a tag-triggered publish-package.yml. Requires a .NET repository with at least one packable project (`<PackageId>`, `<IsPackable>true</IsPackable>`, or `<GeneratePackageOnBuild>`); says so and stops if the repo ships no NuGet package. Picks the single-package (simple tag) or multi-package (PackageId@version tag + release.py) strategy based on how many packable projects the solution has.
 ---
 
 # Create NuGet Publish Workflow
@@ -10,73 +10,127 @@ description: Use when adding or generating a GitHub Actions workflow that publis
 Generates a `.github/workflows/publish-package.yml` that packs a .NET project and
 pushes it to **nuget.org** and **GitHub Packages** on a version tag.
 
-**Core decision:** the number of publishable projects picks the strategy.
+**Core principle:** the repository decides the strategy, not you. Count the packable
+projects and let the count pick:
 
-- **Exactly one** publishable project → **single-package** strategy:
+- **Exactly one** packable project → **single-package** strategy:
   any version tag (`1.2.3` or `v1.2.3`) publishes the one package.
 - **More than one** → **multi-package** strategy: tags of the
   form `<PackageId>@<version>` publish a specific package, plus a `scripts/release.py`
   helper to bump/tag/push.
+- **None** → nothing to publish. Stop and say so.
 
 ## When to Use
 
-- The user asks to "publish to NuGet", "add a release/publish workflow", "set up
-  the GitHub action to publish the package(s)", or points at these reference repos.
+**Precondition: the repository must ship at least one NuGet package.** Verify it
+with the detection below *before* anything else.
+
+- The user asks to "publish to NuGet", "add a release/publish workflow", or "set
+  up the GitHub action to publish the package(s)", **and** the repo has a packable
+  project.
 - A .NET repo has one or more packable projects but no publish workflow (or an
   outdated one) in `.github/workflows/`.
 
-Skip / adapt if the repo is not .NET, does not use the `src/<Project>/…csproj`
-layout, or publishes somewhere other than NuGet/GitHub Packages.
+**If no packable project exists, stop and say so.** A repo of applications,
+services, or samples has nothing to publish; adding `<PackageId>` to a project to
+make this skill applicable is a decision for the user, not for you. Ask whether
+they want a project made packable, and which.
 
-## What Counts as a Publishable Project
+Skip / adapt if the repo publishes somewhere other than NuGet/GitHub Packages.
 
-A `.csproj` is publishable to NuGet when it has a **`<PackageId>`** element (these
-repos also carry `<Version>`, `<PackageLicenseExpression>`, etc.). Test/sample
-projects and internal libraries omit `<PackageId>` and are excluded.
+## What Counts as a Packable Project
 
-Detect them (run from the repo root):
+*(This rule is shared verbatim with `generate-nuget-lib-docs` so the two skills
+never disagree about what a repository ships. Change it in both or neither.)*
+
+A `.csproj` ships a NuGet package when it **opts in** and is **not excluded**:
+
+| | Signal |
+|---|---|
+| **Opts in** | An explicit `<PackageId>`, or `<IsPackable>true</IsPackable>`, or `<GeneratePackageOnBuild>true</GeneratePackageOnBuild>` |
+| **Excluded** | `<IsPackable>false</IsPackable>`; a test project (references `Microsoft.NET.Test.Sdk`); an executable (`<OutputType>Exe</OutputType>`) that has no `<PackageId>` |
+
+An executable *with* a `<PackageId>` is legitimate — that is how .NET tools ship —
+so do not exclude it on `OutputType` alone.
+
+Detect from the **repository root**, not just `src/` — not every repo has one:
 
 ```bash
-# Packable projects = csproj files containing <PackageId>
-grep -rl "<PackageId>" --include=*.csproj src | sort
+grep -rl -e "<PackageId>" -e "<IsPackable>true</IsPackable>" \
+        -e "<GeneratePackageOnBuild>true</GeneratePackageOnBuild>" \
+        --include=*.csproj . | sort
 ```
+
+Then read each match and drop the ones the exclusion column catches.
+
+**The package id** is the `<PackageId>` when set; otherwise it defaults to the
+assembly name, which defaults to the project file name. Read it — never infer it
+from the folder name.
+
+### This skill needs an explicit `<PackageId>`
+
+The multi-package strategy tags releases as `<PackageId>@<version>`, so it can only
+address packages whose id is written in the csproj. A project that packs under the
+default id is a packable project but not an addressable one: tell the user and ask
+them to set `<PackageId>` explicitly before generating a multi-package workflow.
+Single-package repos are unaffected — the tag carries only a version.
 
 Both layouts are valid:
 - Single: project may sit directly in `src/` (e.g. `src/MyLib.csproj`).
 - Multi: each project in its own folder `src/<PackageId>/<PackageId>.csproj`
   (the multi-package workflow's "Locate project" step assumes this layout).
 
+## Red Flags — STOP and Re-read the Procedure
+
+- "No project has a `<PackageId>`, I'll add one so the workflow makes sense" → NO.
+  Making a project packable is a release decision. Ask.
+- "There's a library and three test projects, so it's multi-package" → NO. Test
+  projects are not packable. That repo is *single-package*.
+- "One package, but multi-package is more flexible" → NO. It forces `@`-tags and a
+  release script on a repo that needs neither.
+- "The folder is `src/MyLib`, so the package id is `MyLib`" → Usually, but read
+  `<PackageId>`. A guessed id produces tags nothing responds to.
+- "The latest SDK is 10.0.x, I'll use that" → NO. Derive it from
+  `<TargetFramework>`; a wrong SDK fails at tag time.
+- "`release.py` is just ergonomics, the `@`-tags work without it" → NO. It is what
+  makes per-package tagging usable, and it pushes tags one at a time on purpose.
+
+| Rationalization | Reality |
+|---|---|
+| "A workflow that publishes nothing is harmless" | It is a broken CI file the user debugs months later, at the worst moment. Stop and ask. |
+| "The version check is fussy, packing is enough" | The tag and the csproj `<Version>` disagreeing is exactly the mistake the check exists to catch. |
+| "They can add `NUGET_API_KEY` whenever" | Without it every publish fails. It is the one follow-up they cannot skip — say it. |
+| "I'll push all the version tags at once" | GitHub drops the push event past three tags in one push, so nothing publishes at all. |
+
 ## Procedure
 
-1. **Analyze the target repo.** Confirm it is a .NET solution and find publishable
-   projects with the grep above. Read each matched csproj to capture its
-   `<PackageId>`, `<Version>`, `<RepositoryUrl>`, and the `<TargetFramework>`
-   (to choose the SDK version, e.g. `net10.0` → `10.0.x`).
-2. **Count publishable projects.**
-   - **1 project → single-package.** Copy `templates/single-package.yml` and fill
-     placeholders (see below).
-   - **>1 projects → multi-package.** Copy `templates/multi-package.yml`, then copy
-     `templates/release.py` to `scripts/release.py` in the repo. Confirm every
-     package uses the `src/<PackageId>/<PackageId>.csproj` layout; if any project
-     sits elsewhere, adjust the "Locate project" step accordingly.
-3. **Write the workflow** to `.github/workflows/publish-package.yml` in the target
-   repo (create `.github/workflows/` if missing).
-4. **Handle non-publishable-but-present packages** (rare): if a project has a
-   `<PackageId>` but must NOT be published (e.g. a dependency is unavailable), add
-   its id to the `DEFERRED` set in `scripts/release.py` and add a matching guard in
-   the workflow's "Locate project" step, so the script refuses to tag/push it and the
-   workflow won't publish it.
-5. **Tell the user the follow-ups** (these are their responsibility, not yours):
-   - Add the `NUGET_API_KEY` secret in the repo settings (`GITHUB_TOKEN` is
-     automatic). The workflow needs `packages: write` permission (already set).
-   - How to release: single-package → `git tag 1.2.3 && git push origin 1.2.3`
-     (tag must equal the csproj `<Version>`); multi-package → run
-     `python scripts/release.py` (interactive) or
-     `python scripts/release.py release <project> patch`.
+Create a todo per step.
 
-## Placeholders to Fill
+### 1. Analyze the target repo
 
-Both templates use `__UPPER_CASE__` placeholders — replace every occurrence:
+Confirm it is a .NET solution and find packable projects with the detection above.
+**If there are none, stop and report it** — do not generate a workflow for a
+repository that publishes nothing.
+
+Read each matched csproj to capture its `<PackageId>`, `<Version>`,
+`<RepositoryUrl>`, and the `<TargetFramework>` (which picks the SDK version, e.g.
+`net10.0` → `10.0.x`).
+
+### 2. Count the packable projects and pick the strategy
+
+- **1 project → single-package.** Copy `templates/single-package.yml` and fill the
+  placeholders in step 3.
+- **>1 projects → multi-package.** Copy `templates/multi-package.yml`, then copy
+  `templates/release.py` to `scripts/release.py` in the repo. Confirm every package
+  uses the `src/<PackageId>/<PackageId>.csproj` layout; if any project sits
+  elsewhere, adjust the "Locate project" step accordingly. Confirm too that every
+  package has an explicit `<PackageId>` — the `@`-tags cannot address a default id.
+
+### 3. Write the workflow and fill the placeholders
+
+Write it to `.github/workflows/publish-package.yml` in the target repo (create
+`.github/workflows/` if missing). Both templates use `__UPPER_CASE__` placeholders —
+replace **every** occurrence:
 
 | Placeholder | Value | Source |
 |---|---|---|
@@ -87,7 +141,35 @@ Both templates use `__UPPER_CASE__` placeholders — replace every occurrence:
 The multi-package template resolves the project path and version at runtime from
 the tag, so it has no per-project placeholders beyond `__DOTNET_VERSION__`.
 
-## How the Two Workflows Differ
+### 4. Handle packable-but-must-not-publish projects (rare)
+
+If a project has a `<PackageId>` but must NOT be published (e.g. a dependency is
+unavailable), add its id to the `DEFERRED` set in `scripts/release.py` and add a
+matching guard in the workflow's "Locate project" step, so the script refuses to
+tag/push it and the workflow won't publish it.
+
+### 5. Report the follow-ups
+
+These are the user's responsibility, not yours — but they must be told:
+
+- Add the `NUGET_API_KEY` secret in the repo settings (`GITHUB_TOKEN` is
+  automatic). The workflow needs `packages: write` permission (already set).
+- How to release: single-package → `git tag 1.2.3 && git push origin 1.2.3`
+  (tag must equal the csproj `<Version>`); multi-package → run
+  `python scripts/release.py` (interactive) or
+  `python scripts/release.py release <project> patch`.
+
+## Quick Reference
+
+| Decision | Rule |
+|---|---|
+| Is the repo in scope? | At least one packable project. None → stop. |
+| Which strategy? | 1 packable project → single-package; more than 1 → multi-package. |
+| Which SDK version? | From `<TargetFramework>`, never hardcoded. |
+| Which package id? | `<PackageId>` as written; never the folder name. |
+| Who adds `NUGET_API_KEY`? | The user. Always say so. |
+
+### How the two workflows differ
 
 | | Single-package | Multi-package |
 |---|---|---|
@@ -96,6 +178,7 @@ the tag, so it has no per-project placeholders beyond `__DOTNET_VERSION__`.
 | `workflow_dispatch` | reason only | package id + version inputs |
 | Release helper | none (plain `git tag`) | `scripts/release.py` (bump/tag/push, per-package) |
 | Layout assumed | any csproj path | `src/<PackageId>/<PackageId>.csproj` |
+| Explicit `<PackageId>` | not required | required — the tag addresses it |
 
 Both jobs are otherwise identical: checkout tag → setup .NET → validate version →
 restore → pack (Release) → `dotnet nuget push` to nuget.org then GitHub Packages,
@@ -103,8 +186,16 @@ both with `--skip-duplicate`.
 
 ## Common Mistakes
 
-- **Counting non-packable projects.** Only `<PackageId>`-bearing csproj files count.
-  A repo with one library + several test projects is *single-package*.
+- **Generating a workflow for a repo with no package.** Check first; a repo of
+  apps and samples has nothing to publish, and adding `<PackageId>` to make the
+  skill applicable is the user's call.
+- **Counting non-packable projects.** Test projects, samples, and executables
+  without a `<PackageId>` are excluded. A repo with one library + several test
+  projects is *single-package*.
+- **Searching only `src/`.** Not every repository has one. Detect from the root.
+- **Assuming the package id equals the folder or project name.** It does by
+  default, but read `<PackageId>` — an overridden id that you guessed wrong
+  produces tags nothing responds to.
 - **Picking multi-package for one project.** Don't add `release.py` / `@`-tags when
   a single package would use the simpler tag flow.
 - **Wrong SDK version.** Derive `__DOTNET_VERSION__` from `<TargetFramework>`; don't

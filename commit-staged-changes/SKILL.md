@@ -38,6 +38,29 @@ Use `git commit` **without** `-a` and without any `git add`. The whole point is 
 capture the user's staged selection exactly. Unstaged and untracked files stay out
 of the commit.
 
+## Red Flags — STOP and Re-read the Procedure
+
+- "They obviously meant to stage that file too" → NO. The staged set is a
+  deliberate selection. Commit it as it is.
+- "Nothing is staged, I'll stage everything and commit" → NO. Report the empty
+  index and stop.
+- "I wrote these changes, I know what the diff says" → Read `git diff --cached`
+  anyway. What is staged is often a subset of what you changed.
+- "The subject is 54 characters but it reads better" → NO. Tighten it, or move the
+  detail into the body.
+- "`chore:` is safe when I'm unsure of the type" → NO. Unsure means read the diff
+  again; `chore` for everything makes the history useless.
+- "I'll amend instead, it's tidier" → NO. Amending rewrites history you were not
+  asked to rewrite. Commit, unless the user asked to amend.
+- "I'll push it while I'm here" → NO. Committing is the whole request.
+
+| Rationalization | Reality |
+|---|---|
+| "The body should list every file that changed" | `git log --stat` already does. The body explains *why*, or it is omitted. |
+| "A one-line summary loses information" | For a trivial change it loses nothing and costs nothing to read. Bodies are for reasoning. |
+| "Past tense reads more natural" | Convention is imperative: the subject completes "this commit will …". Consistency beats taste. |
+| "It's all markdown, so `docs:`" | Type follows what the change *does*, not which files it touched. A skill's behavior changing is `feat`, even in markdown. |
+
 ## Procedure
 
 Create a todo per step.
@@ -76,8 +99,8 @@ Pick the single best-fitting type from the staged diff (all lower case):
 | `perf` | improves performance |
 | `style` | formatting/whitespace only, no logic change |
 
-Prefer the four the user emphasized (`chore`, `feat`, `build`, `fix`, `docs`) when
-they fit; reach for the others only when clearly more accurate. If the diff spans
+Prefer the five common ones (`chore`, `feat`, `build`, `fix`, `docs`) when they
+fit; reach for the others only when clearly more accurate. If the diff spans
 several types, pick the type of the **primary** change and describe the rest in the
 body. An optional scope is allowed: `type(scope): description`.
 
@@ -105,9 +128,12 @@ and newline problems (especially on Windows/PowerShell) and preserves the exact
 line wrapping:
 
 ```bash
-# message written to a scratch file, e.g. $TMP/commitmsg.txt
-git -C <repo> commit -F "$TMP/commitmsg.txt"
+# write the message to a scratch file first, then:
+git -C <repo> commit -F "<path to the message file>"
 ```
+
+Use a scratch path outside the repository so the message file is never picked up
+as an untracked file.
 
 Do not append tool/co-author trailers unless the user asks for them.
 
@@ -116,7 +142,19 @@ Do not append tool/co-author trailers unless the user asks for them.
 Show the final message and `git -C <repo> log -1 --stat` (or the commit hash and
 subject) so the user can confirm what landed.
 
-## Message Template
+## Quick Reference
+
+| Rule | Value |
+|---|---|
+| Subject length | ≤ 50 characters, including the `type:` prefix |
+| Subject case | all lower case, no trailing period |
+| Subject mood | imperative — "add", not "added" or "adds" |
+| Body wrap | 72 characters, after one blank line |
+| Body needed? | Only when the subject leaves a *why* unanswered |
+| What gets committed | Exactly what is staged. No `git add`, no `-a` |
+| Trailers | None, unless the user asks |
+
+### Message template
 
 ```
 type: concise lower-case summary under 50 chars

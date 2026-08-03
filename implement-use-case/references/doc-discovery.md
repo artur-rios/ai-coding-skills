@@ -14,6 +14,7 @@ documents. The canonical layout produced by `generate-specs-from-brainstorm` is:
 ```
 <docs-root>/
 ├── initial/
+│   ├── Brainstorm.md
 │   └── Workflow.md                              ← operational step-by-step
 └── requirements/
     ├── Development Workflow Document.md         ← normative process
@@ -23,8 +24,9 @@ documents. The canonical layout produced by `generate-specs-from-brainstorm` is:
     └── Technology Stack Document.md
 ```
 
-`<docs-root>` is commonly `docs/`, but not always. Search by file name rather than
-assuming a path:
+`<docs-root>` is the **project root** in the layout `generate-specs-from-brainstorm`
+writes, but other projects nest the same pair under `docs/`. Search by file name
+rather than assuming a path:
 
 ```bash
 find . -name "Development Workflow Document.md" -o -name "Workflow.md" \

@@ -60,6 +60,17 @@ Optional body explaining what and why, imperative mood, wrapped at
 6. **Commit** via a temp message file and `git commit -F` (reliable on Windows).
 7. **Report** the final message and the new commit.
 
+## What it refuses to do
+
+| Temptation | What the skill does instead |
+|---|---|
+| Stage the file you "obviously" meant to include | Commits the staged set exactly — no `git add`, no `-a` |
+| Stage everything when the index is empty | Reports the empty index and stops |
+| Trust its own memory of the diff | Reads `git diff --cached`; what's staged is often a subset of what changed |
+| Let a good subject run to 54 characters | Tightens it, or moves the detail into the body |
+| Reach for `chore:` when unsure | Re-reads the diff; `chore` for everything makes the history useless |
+| Amend or push while it's there | Commits only — amending rewrites history nobody asked to rewrite |
+
 ## Files in this skill
 
 | Path | Purpose |

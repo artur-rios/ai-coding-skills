@@ -119,7 +119,10 @@ title = '<Page Name>'
 The filename (minus `.md`) is the slug used in the menu `url` and Pages links. Reuse and expand the
 README's content here — the docs can go deeper than the README.
 
-### 6. GitHub Pages workflow (`.github/workflows/build-docs-and-coverage-report.yml`)
+### 6. GitHub Pages workflow
+
+File name: `.github/workflows/build-docs-and-coverage-report.yml` when a coverage report is published
+into the site, `.github/workflows/build-docs.yml` when it is not. Keep it in step with the `name:` below.
 
 `submodules: recursive` is required or the theme is missing on CI.
 

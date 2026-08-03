@@ -107,8 +107,9 @@ The project needs workflow documents. The canonical layout is the one
     └── Technology Stack Document.md
 ```
 
-Documents are found **by name and content**, not by a hardcoded path, so a
-different docs root is fine.
+`<docs-root>` is the project root in that layout; other projects nest the same pair
+under `docs/`. Documents are found **by name and content**, not by a hardcoded
+path, so either is fine.
 
 **If no workflow document exists, the skill stops** and offers two ways forward:
 generate the requirements set, or state the process yourself. It will not infer a

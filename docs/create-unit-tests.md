@@ -21,6 +21,14 @@ Ask for it with phrases like "write unit tests", "add tests for this class",
 It's aimed at unit-level tests. For integration or end-to-end tests the naming
 convention still helps, but the edge-case taxonomy is unit-focused.
 
+**Given-When-Then is the default, not an override.** If your repository documents
+its own convention — a `Testing Specification Document`, a `CONTRIBUTING.md`
+section, or a pattern the existing tests already follow — the skill follows that
+instead, surfaces the difference, and tells you which it used. A repo with two
+naming schemes is worse off than one using the scheme you'd not have picked. This
+is also what keeps it consistent when
+[implement-use-case](implement-use-case.md) delegates the unit layer to it.
+
 ## The naming rule
 
 Each test name has exactly three PascalCase segments joined by underscores:
@@ -38,8 +46,9 @@ description text.
 
 ## How it works
 
-1. **Identify** the target and detect the test framework (.NET/xUnit-NUnit-MSTest,
-   Jest/Vitest, pytest, JUnit, …).
+1. **Identify** the target, detect the test framework (.NET/xUnit-NUnit-MSTest,
+   Jest/Vitest, pytest, JUnit, …), and check for a project testing standard that
+   overrides the default naming.
 2. **Read the code under test** — parameters, return types, throws, dependencies,
    state. It never invents behavior.
 3. **Enumerate scenarios first** across a fixed taxonomy (happy path, boundaries,
@@ -53,6 +62,20 @@ description text.
 6. **Report** an overview: target, scenario list, pass/fail numbers, and any gaps
    or defects found.
 
+## What it refuses to do
+
+The skill carries a red-flag list for the ways a test suite quietly becomes
+worthless:
+
+| Temptation | What the skill does instead |
+|---|---|
+| Ship the happy path and add edge cases "later" | Treats the edge cases as the deliverable |
+| Discover scenarios while writing tests | Enumerates them first, so coverage is reviewable before forty tests exist |
+| Edit a failing assertion until it passes | Investigates, and reports a real defect rather than hiding it |
+| Loop over inputs to compute expected values | Data-driven cases with literal expectations — a computed expectation can agree with a wrong implementation |
+| Mock the class under test | Mocks collaborators only |
+| Report a suite as green from inference | Runs it and quotes the real numbers |
+
 ## Files in this skill
 
 | Path | Purpose |
@@ -65,7 +88,8 @@ description text.
 
 After it runs, you receive an overview covering:
 
-- **Target** — what was tested and the framework used.
+- **Target** — what was tested, the framework used, and the naming convention
+  followed if it wasn't Given-When-Then.
 - **Scenario list** — behaviors and edge cases covered, grouped by unit.
 - **Result** — the actual pass/fail numbers from the test run.
 - **Gaps & findings** — anything left uncovered and why, plus real defects or

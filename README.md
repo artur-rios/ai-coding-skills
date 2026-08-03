@@ -16,12 +16,38 @@ templates and reference files. The agent reads the descriptions of the skills
 available to it and invokes the matching one automatically — you don't call it by
 hand, you just describe what you want.
 
+## Skill anatomy
+
+Every skill in this repository follows the same shape, so one is readable once you
+have read another:
+
+| Section | Contains |
+|---|---|
+| `# Title` + `## Overview` | What the skill produces, and a **Core principle:** — the one rule that resolves the ambiguous cases. |
+| `## When to Use` | Trigger phrases, the **precondition** that scopes the skill to the situations it's for, and a *Skip / adapt if* list naming the skill that handles the neighbouring case. |
+| *(domain sections)* | Optional. Anything the reader needs before the red flags make sense — a detection rule, a naming convention, a hard constraint. |
+| `## Red Flags — STOP and Re-read the Procedure` | The rationalizations that precede the skill's real failure modes, each with the correction; then a Rationalization / Reality table. |
+| `## Procedure` | "Create a todo per step.", then `### N.` steps in execution order. |
+| `## Quick Reference` | The decisions and their rules, condensed to tables. |
+| `## Common Mistakes` | What goes wrong in practice, phrased as **bold lede** + why it matters. |
+
+Two conventions carry across skills:
+
+- **Preconditions are checked, not assumed.** A skill scoped to a situation says so
+  in its `description` and verifies it in step 1, then stops rather than
+  improvising. `generate-nuget-lib-docs` and `create-nuget-publish-workflow` share
+  their packable-project rule **verbatim** so they can never disagree about what a
+  repository ships.
+- **Skills defer to the project.** Where a repository documents its own convention —
+  a testing standard, a workflow, a branch pattern — the document wins and the
+  skill says which it followed.
+
 ## Skills in this repository
 
 | Skill | What it does | Docs |
 |---|---|---|
 | **create-unit-tests** | Generates a thorough unit-test suite for a target project, using Given-When-Then test names and covering happy paths plus edge cases. | [docs/create-unit-tests.md](docs/create-unit-tests.md) |
-| **create-nuget-publish-workflow** | Generates a tag-triggered GitHub Actions workflow that publishes a .NET project's NuGet package(s) to nuget.org and GitHub Packages. | [docs/create-nuget-publish-workflow.md](docs/create-nuget-publish-workflow.md) |
+| **create-nuget-publish-workflow** | Generates a tag-triggered GitHub Actions workflow that publishes a .NET library's NuGet package(s) to nuget.org and GitHub Packages. Requires a repo that actually ships a package. | [docs/create-nuget-publish-workflow.md](docs/create-nuget-publish-workflow.md) |
 | **generate-nuget-lib-docs** | Generates a README (package table, NuGet badges, install commands) plus a Hugo docs site deployed to GitHub Pages via CI, for a .NET library published as NuGet packages. | [docs/generate-nuget-lib-docs.md](docs/generate-nuget-lib-docs.md) |
 | **scaffold-dotnet-project** | Bootstraps a new .NET solution from scratch — `dotnet new` template, DDD or basic layout, config files, README and LICENSE, verified with a build. | [docs/scaffold-dotnet-project.md](docs/scaffold-dotnet-project.md) |
 | **commit-staged-changes** | Commits the already-staged files with a lowercase Conventional Commits message that follows the 50/72 rule. | [docs/commit-staged-changes.md](docs/commit-staged-changes.md) |
