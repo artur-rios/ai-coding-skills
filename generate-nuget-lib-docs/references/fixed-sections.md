@@ -11,10 +11,9 @@ Semantic Versioning (SemVer). Breaking changes bump the major version; new non-b
 the minor; fixes bump the patch.
 ```
 
-## Build, test and publish — include only if the project is a .NET project
+## Build, test and publish — always include for a NuGet library
 
-Keep the wording; drop the "publish" clause and the toolset links only if the project clearly does not
-ship packages (rare — default to keeping it as-is).
+Keep the wording verbatim.
 
 ```markdown
 ## Build, test and publish

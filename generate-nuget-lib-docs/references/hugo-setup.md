@@ -38,9 +38,9 @@ This writes/updates `.gitmodules` at the repo root:
 
 ### 3. Write `docs/hugo.toml`
 
-Fill `<owner>`, `<repo>`, `<Project Title>`, and one `[[menu.main]]` per content page. Keep the Author,
-GitHub, and (for .NET) Test Coverage menu items. The `[module]` mount block is only for .NET projects
-that publish a coverage report into `docs/coverage-report` — omit it otherwise.
+Fill `<owner>`, `<repo>`, `<Project Title>`, and one `[[menu.main]]` per content page. Keep the Author
+and GitHub menu items. The `[module]` mount block and the Test Coverage menu item apply only when the
+solution publishes a coverage report into `docs/coverage-report` — omit both otherwise.
 
 ```toml
 baseURL = 'https://<owner>.github.io/<repo>'
@@ -48,7 +48,7 @@ locale = 'en-us'
 title = '<Project Title>'
 theme = 'hugo-theme-re-terminal'
 
-# .NET only — mounts a generated coverage report as static files. Omit for non-.NET projects.
+# Only if the solution publishes a coverage report — mounts it as static files. Omit otherwise.
 [module]
 [[module.mounts]]
 source = 'coverage-report'
@@ -80,7 +80,7 @@ identifier = "github"
 name = "GitHub"
 url = "https://github.com/<owner>/<repo>"
 weight = 100
-# .NET only:
+# only if a coverage report is published:
 [[menu.main]]
 identifier = "test-coverage"
 name = "Test Coverage"
@@ -175,7 +175,8 @@ jobs:
           publish_branch: gh-pages
 ```
 
-Name the workflow "Build Docs" (drop "& Coverage Report" for non-.NET projects).
+Name the workflow "Build Docs & Coverage Report" when a coverage report is published; otherwise just
+"Build Docs".
 
 ### 7. Verify locally
 

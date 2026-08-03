@@ -24,9 +24,10 @@ Ask for it with phrases like "turn my brainstorm into docs", "generate specs fro
 Brainstorm.md", "create the requirements documents for this project", or "expand
 these notes into a vision and requirements doc".
 
-It is **not** for documenting existing code — for a README and a docs site, use
-[generate-project-docs](generate-project-docs.md). This skill writes documents
-only; it writes no code.
+It is **not** for documenting existing code — for a README and a docs site for a
+.NET/NuGet library, use
+[generate-nuget-lib-docs](generate-nuget-lib-docs.md). This skill writes
+documents only; it writes no code.
 
 ## What you get
 

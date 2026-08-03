@@ -1,16 +1,17 @@
 ---
-name: generate-project-docs
-description: Use when the user wants to generate structured project documentation — a README (overview, usage, and the Versioning / Build-test-publish / Legal sections) plus a Hugo docs site using the re-terminal theme fork. Triggers on "generate docs", "create documentation", "make a readme and docs site", "document this project".
+name: generate-nuget-lib-docs
+description: Use when the user wants to generate documentation for a .NET library that ships as one or more NuGet packages — a README (overview, package table with NuGet badges, install, usage, and the Versioning / Build-test-publish / Legal sections) plus a Hugo docs site using the re-terminal theme fork, deployed to GitHub Pages by CI. Triggers on "generate docs" / "create documentation" / "document this project" / "make a readme and docs site" when the project is a .NET solution with packable projects (`<IsPackable>`, `<PackageId>`, or a nupkg-producing csproj).
 ---
 
-# Generate Project Docs
+# Generate NuGet Library Docs
 
 ## Overview
 
-Generates two deliverables for the current project:
+Generates two deliverables for the current NuGet library project:
 
-1. A **README.md** — overview, usage examples, and the fixed **Versioning**, **Build, test and
-   publish**, and **Legal** sections (each conditional, see below).
+1. A **README.md** — overview, package table with NuGet version badges, `dotnet add package` install
+   commands, usage examples, and the fixed **Versioning**, **Build, test and publish**, and **Legal**
+   sections (see below for which are conditional).
 2. A **Hugo docs site** under `docs/` using the `re-terminal` theme fork as a submodule,
    plus a **GitHub Actions workflow** (`.github/workflows/build-docs-and-coverage-report.yml`) that
    builds the site and deploys it to GitHub Pages.
@@ -20,6 +21,20 @@ at runtime — nothing is hardcoded. See `references/identity.md` for exactly ho
 only the repo name and project-specific content change per project.
 
 **Core principle:** ask only what can't be inferred; infer everything else from the project itself.
+
+## When to use
+
+Use this when the repo is a **.NET library distributed as NuGet package(s)** — i.e. it has a `*.sln`
+or `*.csproj` and at least one packable project (`<IsPackable>true</IsPackable>`, an explicit
+`<PackageId>`, or a project that is clearly published to nuget.org).
+
+If the project is .NET but ships no packages (an app, a service, a sample), or is not .NET at all, say
+so and ask whether to proceed anyway — the package table, NuGet badges and install commands won't apply,
+and the rest of the workflow (README overview + Hugo site + Pages workflow) still works if the user
+wants it.
+
+Related: `create-nuget-publish-workflow` generates the *publishing* CI for the same kind of project;
+this skill only writes documentation.
 
 ## Workflow
 
@@ -32,12 +47,14 @@ Gather these facts before asking anything:
 | Fact | How to detect |
 |---|---|
 | Repo name | `git remote get-url origin` → last path segment without `.git`. Used in Pages URL and GitHub links. |
-| Is it .NET? | Any `*.csproj` / `*.sln` / `*.fsproj` present. |
+| Packable projects | Every `*.csproj` that is packable — no `<IsPackable>false</IsPackable>`, and ideally a `<PackageId>`. This is the package family. |
+| Package ids | `<PackageId>` per packable project, falling back to the assembly/project name. Used for badges and `dotnet add package`. |
+| Target framework(s) | `<TargetFramework>` / `<TargetFrameworks>` — states the runtime requirement in Installation. |
 | Existing LICENSE? | `LICENSE` / `LICENSE.md` / `LICENSE.txt` at root. |
 | Existing README? | `README.md` at root (you will replace or extend it — confirm before overwriting substantial content). |
 | Existing Hugo docs? | `docs/hugo.toml` (or `config.toml`) present. |
-| Package / module layout | Scan `src/`, project files, `package.json`, etc. to write an accurate overview. |
-| Public API / usage | Read the main entry points to write real usage examples — never invent an API. |
+| Solution layout | Scan `src/` and the project files to write an accurate overview and the package table. |
+| Public API / usage | Read the main entry points of each package to write real usage examples — never invent an API. |
 
 If no git remote exists, ask the user for the intended `owner/repo`.
 
@@ -56,12 +73,13 @@ yourself in step 3.
 
 ### 3. Decide structure (no user input)
 
-- **Overview:** write it from the analysis — what the project is, the problem it solves, its module/package
+- **Overview:** write it from the analysis — what the library is, the problem it solves, its package
   layout, install steps, and a minimal quick-start. Match the tone of `references/readme-template.md`.
-- **Single vs. multi-page docs:** one content page (`_index.md`) if the project is a single small unit;
-  split into `_index.md` + one page per major component/package/subsystem if there are several distinct
-  areas (e.g. one page per major subsystem). Add a matching menu
-  entry in `hugo.toml` for each page.
+- **Package table:** one row per packable project — package id, what it does, status. Include it whenever
+  there is more than one package; for a single package, fold it into the overview instead.
+- **Single vs. multi-page docs:** one content page (`_index.md`) for a single-package library; for a
+  multi-package family, `_index.md` + one page per package (or per major subsystem when a package is
+  large enough to warrant it). Add a matching menu entry in `hugo.toml` for each page.
 
 ### 4. Write the README
 
@@ -69,10 +87,12 @@ Use `references/readme-template.md` as the skeleton. Fill the overview and usage
 fixed sections **in this order, each only if its condition holds**:
 
 - **Versioning** — only if semantic versioning (verbatim block in `references/fixed-sections.md`).
-- **Build, test and publish** — only if it's a .NET project (verbatim block in `references/fixed-sections.md`).
+- **Build, test and publish** — always for a NuGet library (verbatim block in `references/fixed-sections.md`).
 - **Legal** — only if a license exists or was just created (verbatim block, adapted to the chosen license).
 
-Add the docs-site and license badges at the top, plus any per-package/version badges that apply.
+Add the docs-site and license badges at the top, plus one shields.io NuGet version badge per package
+(`references/identity.md`). Installation uses the real `dotnet add package <PackageId>` command for every
+package, with the target framework as the runtime requirement.
 
 ### 5. Create or verify the license (if requested)
 
@@ -93,8 +113,7 @@ project uses: on push to `main` touching `docs/**` (and `workflow_dispatch`), it
 `gh-pages` branch. Use the verbatim YAML in `references/hugo-setup.md` step 6, filling `<owner>`/`<repo>`.
 
 **Ensure this file exists even when the docs site already existed** — a repo can have a Hugo site but no
-CI. If the file is already present and correct, leave it; if it's missing or stale, create/fix it. Drop
-`& Coverage Report` from the workflow name for non-.NET projects.
+CI. If the file is already present and correct, leave it; if it's missing or stale, create/fix it.
 
 ### 8. Report
 
@@ -115,7 +134,10 @@ the `gh-pages` branch) if this is the repo's first docs deploy.
 ## Common mistakes
 
 - **Inventing usage examples.** Read the real code first; a wrong example is worse than none.
-- **Including Build/test/publish for a non-.NET project.** It's .NET-specific — omit it otherwise.
+- **Guessing package ids from folder names.** Read `<PackageId>` from the csproj; the folder and the
+  published id often differ, and a wrong `dotnet add package` line is a broken install.
+- **Listing non-packable projects as packages.** Test, sample and app projects are not part of the
+  package family — check `<IsPackable>` before adding a row or a badge.
 - **Including Versioning when the user isn't using SemVer.** Skip it entirely; don't water it down.
 - **Overwriting an existing README without confirming.** Diff mentally; preserve anything hand-written.
 - **Forgetting `submodules: recursive` in the Pages workflow** — the theme won't be there on CI and the

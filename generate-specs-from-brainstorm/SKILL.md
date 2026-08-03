@@ -1,6 +1,6 @@
 ---
 name: generate-specs-from-brainstorm
-description: Use when the user has a Brainstorm.md (or similar free-form idea notes) for a software project and wants it expanded into structured project documentation — first an `initial/` folder (Project Overview, Technology Stack, Workflow, Business Rules), then a formal `requirements/` folder (Vision, System Requirements, Use Case Specification, Development Workflow, Operations & Infrastructure, Technology Stack, Testing Specification). Triggers on "turn my brainstorm into docs", "generate specs from Brainstorm.md", "create the requirements documents for this project", "expand these notes into a vision and requirements doc". Not for README/docs-site generation of an existing codebase — that is generate-project-docs.
+description: Use when the user has a Brainstorm.md (or similar free-form idea notes) for a software project and wants it expanded into structured project documentation — first an `initial/` folder (Project Overview, Technology Stack, Workflow, Business Rules), then a formal `requirements/` folder (Vision, System Requirements, Use Case Specification, Development Workflow, Operations & Infrastructure, Technology Stack, Testing Specification). Triggers on "turn my brainstorm into docs", "generate specs from Brainstorm.md", "create the requirements documents for this project", "expand these notes into a vision and requirements doc". Not for README/docs-site generation of an existing codebase — that is generate-nuget-lib-docs.
 ---
 
 # Generate Specs from Brainstorm
@@ -28,8 +28,8 @@ during review are what feed the formal documents.
   notes.
 
 Skip / adapt if:
-- The user wants a README or a documentation site for **existing code** — that is
-  `generate-project-docs`.
+- The user wants a README or a documentation site for **existing code** — for a
+  .NET/NuGet library that is `generate-nuget-lib-docs`.
 - The user wants to implement something. Specs come first, but this skill stops
   at documents; it writes no code.
 - There is no brainstorm and no notes — there is nothing to expand. Ask the user

@@ -22,7 +22,7 @@ may swap it for any other Hugo theme (adjust the submodule URL and `theme = ` in
 https://github.com/artur-rios/hugo-theme-re-terminal.git
 ```
 
-## Helper toolsets (optional, referenced in "Build, test and publish", .NET only)
+## Helper toolsets (optional, referenced in "Build, test and publish")
 
 These are optional public helper repos linked from the README's "Build, test and publish" section. Keep
 them as defaults or drop/replace them per the project:
@@ -39,7 +39,7 @@ Docs and license badges are always applicable when those things exist:
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 ```
 
-For a .NET project publishing NuGet packages, add one shields.io NuGet badge per package:
+Add one shields.io NuGet version badge per published package:
 
 ```markdown
 [![<PkgShortName>](https://img.shields.io/nuget/v/<PackageId>.svg?label=<PkgShortName>)](https://www.nuget.org/packages/<PackageId>)
