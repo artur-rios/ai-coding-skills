@@ -5,13 +5,15 @@ first document of a phase, then apply it to every file in that phase.
 
 ## 1. File naming and location
 
-Both output folders are **siblings of `Brainstorm.md`**, never nested inside one
-another:
+`initial/` and `requirements/` are **siblings at the project root**, never nested
+inside one another. `Brainstorm.md` lives **inside `initial/`** alongside the
+documents it produced, and `README.md` sits at the root:
 
 ```
-<brainstorm-folder>/
-├── Brainstorm.md
+<project-root>/
+├── README.md
 ├── initial/
+│   ├── Brainstorm.md
 │   ├── Project Overview.md
 │   ├── Technology Stack.md
 │   ├── Workflow.md
@@ -26,6 +28,10 @@ another:
     └── Testing Specification Document.md
 ```
 
+The project root is the folder the brainstorm was found in — unless it was found
+in a folder already named `initial/`, in which case the root is that folder's
+parent.
+
 File names are **exact** — Title Case, spaces preserved, `.md` extension. Do not
 kebab-case them, do not add numeric prefixes, do not pluralize.
 
@@ -38,7 +44,8 @@ and the project name:
 # Vision Document — Acme Ordering API
 ```
 
-The same project name string is used in all eleven documents.
+The same project name string is used in all eleven specification documents. The
+`README.md` is the exception: its `H1` is the project name alone.
 
 ## 3. Identifier schemes
 
@@ -51,6 +58,7 @@ The same project name string is used in all eleven documents.
 | `UC-xx` | Use case | `UC-01` … zero-padded, sequential across the whole document | Use Case Specification Document §2 |
 | `AF-xx` | Alternative / exception flow | `AF-01` … numbered **within** its own use case, restarting at `01` for each | Use Case Specification Document, inside each use case |
 | `TC-<AREA>-xx` | Test case grouping | Optional; only when the Testing Specification enumerates named suites | Testing Specification Document |
+| `M-xx` | Milestone | `M-01` … zero-padded, sequential in dependency order | GitHub milestone titles and the README roadmap |
 
 Identifiers are **never renumbered** once written. If a requirement is dropped
 later, the document keeps the number and marks it withdrawn rather than shifting
@@ -106,6 +114,8 @@ Spaces become `%20` and `&` becomes `%26`:
 | Testing Specification Document | `[Testing Specification Document](Testing%20Specification%20Document.md)` |
 
 From `requirements/` back to an `initial/` document, prefix with `../initial/`.
+From the root `README.md`, prefix with the folder name — `requirements/` or
+`initial/` — and encode the same way.
 
 **Single source of truth rule:** the Technology Stack Document owns every
 framework, library, and version. Other documents *link* to it and never restate a

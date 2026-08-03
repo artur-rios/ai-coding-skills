@@ -8,7 +8,7 @@ answer, and never invent one.
 ## How to use this file
 
 1. Read the source material for the phase (Phase 1: `Brainstorm.md`; Phase 2:
-   the four approved `initial/` documents).
+   the four approved `initial/` documents; Phase 3: the `requirements/` set).
 2. For each checklist item below, mark it **answered** (the source states it,
    explicitly or by unambiguous implication) or **missing**.
 3. Ask every missing item in a single batch, grouped by topic.
@@ -148,3 +148,35 @@ a fabricated version.
       live sandbox).
 - [ ] Coverage expectations per unit of work.
 - [ ] How the suites are executed and separated (filters, tags, projects).
+
+---
+
+## Phase 3 — README and GitHub backlog
+
+Phase 3 derives almost everything from the approved documents. These are the only
+questions it can need — ask whatever is still open in one batch, before writing
+the README and before touching GitHub.
+
+### README
+
+- [ ] The install command, when the Technology Stack Document does not determine
+      it (`dotnet restore`, `npm install`, `uv sync`, …).
+- [ ] The command that starts the application, if the documents never state one
+      and the project is not a library.
+- [ ] The test command, when the Testing Specification Document does not state it.
+
+Never write a command you cannot point to a document for. A README command that
+does not work is the first thing a reader tries and the first thing that breaks
+their trust in the rest of the file.
+
+### Milestones and issues
+
+- [ ] Confirmation of the milestone grouping — always presented for approval, never
+      assumed (see `github-backlog.md` §2).
+- [ ] Whether to create the milestones and issues on GitHub now, or leave the
+      README roadmap as a plan the user creates later.
+- [ ] The target repository, if the working directory has no GitHub remote.
+- [ ] Which existing labels to apply, if the user wants labels at all. Do not
+      invent a label taxonomy.
+- [ ] Real due dates, only if the user volunteers them. Never derive a date from
+      an estimate.
