@@ -1,14 +1,14 @@
 # Document Discovery
 
-*(Shared verbatim with `implement-use-cases-batch`, which discovers documents the
-same way. Change it in both or neither — two skills reading the same project
+*(Shared verbatim with `implement-use-case`, which discovers documents the same
+way. Change it in both or neither — two skills reading the same project
 differently is the bug this note exists to prevent.)*
 
 How to find the project's workflow documents, decide which is authoritative, and
 extract the concrete parameters this project runs on.
 
-Do this **before** touching the use case. Everything the skill does afterwards is
-governed by what these documents say.
+Do this **once per batch**, before the first use case. Everything the skill does
+afterwards is governed by what these documents say.
 
 ## 1. Locate the documents
 

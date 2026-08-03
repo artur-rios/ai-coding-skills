@@ -31,6 +31,9 @@ would drift and you would have no way to tell which one the agent followed.
 Skip / adapt if:
 - The project has **no workflow documents**. Stop and say so (step 2). Do not
   invent a process.
+- The user names **several** use cases, a range, or a milestone — that is
+  `implement-use-cases-batch`, which runs this same workflow unattended across a
+  series and merges its own pull requests.
 - The user wants a quick edit, a bugfix, or an experiment. This skill is the
   production line for a specified unit of work; it is heavy for anything else.
 - The user is asking a question about a use case rather than asking for it to be
@@ -74,8 +77,11 @@ Create a todo per step.
 Get the use case number or name from the user's message. If it is missing or
 ambiguous, ask before doing anything else.
 
-**One invocation handles exactly one use case.** If several are named, confirm the
-order and implement the first.
+**One invocation handles exactly one use case.** If several are named — a range, a
+list, a milestone — the user is asking for `implement-use-cases-batch`, which runs
+the same workflow unattended across a series. Say so and confirm which they want
+before starting; if they want this skill's per-stage gates, implement the first and
+ask before the next.
 
 ### 2. Locate and validate the workflow documents
 

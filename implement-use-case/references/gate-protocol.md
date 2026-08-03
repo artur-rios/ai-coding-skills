@@ -105,6 +105,11 @@ it.
 
 ## Scope
 
-One invocation implements **one** use case. If the user names several, implement
-the first and ask before starting the next — each one gets its own branch, issue,
-and pull request, and each one gets its own four gates.
+One invocation implements **one** use case. If the user names several, they are
+describing `implement-use-cases-batch` — the same workflow and the same
+verifications, run unattended across a series, authorized once up front. Point at
+it rather than quietly running this skill several times.
+
+If they do want this skill's gates on each one, implement the first and ask before
+starting the next — each gets its own branch, issue, and pull request, and each
+gets its own four gates.
