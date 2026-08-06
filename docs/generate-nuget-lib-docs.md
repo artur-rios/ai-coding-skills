@@ -11,7 +11,7 @@ It produces two deliverables:
    itself, a package table with NuGet version badges and `dotnet add package`
    install commands, followed by fixed **Versioning**, **Build, test and
    publish**, and **Legal** sections.
-2. A **Hugo docs site** under `docs/` using the `re-terminal` theme fork as a git
+2. A **Hugo docs site** under `docs/` using the **Docsy** theme as a git
    submodule, plus a GitHub Actions workflow that builds the site and deploys it
    to GitHub Pages.
 
@@ -53,7 +53,8 @@ For the *publishing* CI of the same kind of project, see
 4. **Write the README** from the template, with NuGet badges and install
    commands, appending the conditional fixed sections in order.
 5. **Create the license** if requested and none exists.
-6. **Create or update the Hugo site** (theme submodule, `hugo.toml`, content).
+6. **Create or update the Hugo site** (Docsy submodule + its npm install,
+   `hugo.toml`, content under `content/en/`).
 7. **Create the Pages workflow** (always — even when the site already existed).
 8. **Report** what changed, which sections were included and why, and the preview
    / submodule commands.
@@ -85,14 +86,14 @@ For the *publishing* CI of the same kind of project, see
 | `references/identity.md` | How author / owner / URL / badge fields are resolved from git. |
 | `references/readme-template.md` | README skeleton and tone. |
 | `references/fixed-sections.md` | Verbatim Versioning / Build-test-publish / Legal blocks. |
-| `references/hugo-setup.md` | Hugo site + theme submodule + Pages workflow. |
+| `references/hugo-setup.md` | Hugo site + Docsy submodule + Pages workflow. |
 | `references/mermaid-types.md` | Common diagram types to offer, with examples. |
 | `references/licenses.md` | How to fetch and fill license text. |
 
 ## What you get back
 
 A README written from the real API — package table, NuGet badges, working
-`dotnet add package` lines — a Hugo site with a page per package, a Pages workflow
-that actually builds (`submodules: recursive` included, without which the theme is
-missing on CI every time), and a report naming which conditional sections were
+`dotnet add package` lines — a Docsy site with a page per package, a Pages workflow
+that actually builds (`submodules: recursive` and the Docsy npm install included,
+without either of which the build fails on CI every time), and a report naming which conditional sections were
 included and why.

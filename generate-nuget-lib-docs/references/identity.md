@@ -13,14 +13,16 @@ git configuration, asking the user only for what git can't provide.
 | GitHub Pages base URL | `https://<owner>.github.io/<repo>` |
 | Copyright holder | Same as author name. |
 
-## Docs theme submodule (default, swappable)
+## Docs theme submodule
 
-The Hugo site needs a theme. This skill defaults to the public re-terminal theme fork below; the user
-may swap it for any other Hugo theme (adjust the submodule URL and `theme = ` in `hugo.toml` accordingly).
+The Hugo site uses **Docsy**, Google's technical-documentation theme, added as a git submodule:
 
 ```
-https://github.com/artur-rios/hugo-theme-re-terminal.git
+https://github.com/google/docsy.git
 ```
+
+Docsy is the default for this skill — don't substitute another theme unless the user asks. If they do,
+adjust the submodule URL, `theme = ` in `hugo.toml`, and the content layout in `references/hugo-setup.md`.
 
 ## Helper toolsets (optional, referenced in "Build, test and publish")
 

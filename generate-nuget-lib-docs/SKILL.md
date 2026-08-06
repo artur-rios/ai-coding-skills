@@ -1,6 +1,6 @@
 ---
 name: generate-nuget-lib-docs
-description: Use when the user wants to generate documentation for a .NET library that ships as one or more NuGet packages — a README (overview, package table with NuGet badges, install, usage, and the Versioning / Build-test-publish / Legal sections) plus a Hugo docs site using the re-terminal theme fork, deployed to GitHub Pages by CI. Triggers on "generate docs" / "create documentation" / "document this project" / "make a readme and docs site" when the project is a .NET solution with packable projects (`<IsPackable>`, `<PackageId>`, or a nupkg-producing csproj).
+description: Use when the user wants to generate documentation for a .NET library that ships as one or more NuGet packages — a README (overview, package table with NuGet badges, install, usage, and the Versioning / Build-test-publish / Legal sections) plus a Hugo docs site using the Docsy theme, deployed to GitHub Pages by CI. Triggers on "generate docs" / "create documentation" / "document this project" / "make a readme and docs site" when the project is a .NET solution with packable projects (`<IsPackable>`, `<PackageId>`, or a nupkg-producing csproj).
 ---
 
 # Generate NuGet Library Docs
@@ -12,7 +12,7 @@ Generates two deliverables for the current NuGet library project:
 1. A **README.md** — overview, package table with NuGet version badges, `dotnet add package` install
    commands, usage examples, and the fixed **Versioning**, **Build, test and publish**, and **Legal**
    sections (see below for which are conditional).
-2. A **Hugo docs site** under `docs/` using the `re-terminal` theme fork as a submodule,
+2. A **Hugo docs site** under `docs/` using the **Docsy** theme as a submodule,
    plus a **GitHub Actions workflow** under `.github/workflows/` that builds the site and deploys it
    to GitHub Pages.
 
@@ -128,9 +128,10 @@ yourself in step 3.
   layout, install steps, and a minimal quick-start. Match the tone of `references/readme-template.md`.
 - **Package table:** one row per packable project — package id, what it does, status. Include it whenever
   there is more than one package; for a single package, fold it into the overview instead.
-- **Single vs. multi-page docs:** one content page (`_index.md`) for a single-package library; for a
-  multi-package family, `_index.md` + one page per package (or per major subsystem when a package is
-  large enough to warrant it). Add a matching menu entry in `hugo.toml` for each page.
+- **Single vs. multi-page docs:** one docs page (`docs/_index.md`) for a single-package library; for a
+  multi-package family, `docs/_index.md` + one page per package (or per major subsystem when a package
+  is large enough to warrant it). Docsy builds the sidebar from the page tree — order pages with
+  `weight`, don't add a `[[menu.main]]` entry per page.
 
 ### 4. Write the README
 
@@ -152,15 +153,19 @@ If the user asked for a license and none exists, write it to `LICENSE` using `re
 
 ### 6. Create or verify the Hugo docs site
 
-If `docs/hugo.toml` already exists, only update content/menu to match step 3. Otherwise create it from
-scratch — follow `references/hugo-setup.md` exactly (init site, add the theme fork as a submodule, write
-`hugo.toml`, archetype, and content pages).
+If `docs/hugo.toml` already exists, only update the content pages to match step 3. Otherwise create it
+from scratch — follow `references/hugo-setup.md` exactly (init site, add Docsy as a submodule and run
+`npm install` inside it, write `hugo.toml`, archetype, and content pages under `content/en/`).
+
+If an existing site uses a theme other than Docsy, say so and ask before switching — the swap moves
+content directories and rewrites the config.
 
 ### 7. Create the GitHub Actions workflow (always)
 
 Write the Pages workflow: on push to `main` touching `docs/**` (and `workflow_dispatch`), it checks out
-with `submodules: recursive`, sets up Hugo Extended, builds `docs/`, and deploys `docs/public` to the
-`gh-pages` branch. Use the verbatim YAML in `references/hugo-setup.md` step 6, filling `<owner>`/`<repo>`.
+with `submodules: recursive`, installs the Docsy npm dependencies, sets up Hugo Extended, builds `docs/`,
+and deploys `docs/public` to the `gh-pages` branch. Use the verbatim YAML in `references/hugo-setup.md`
+step 7, filling `<owner>`/`<repo>`.
 
 Name the file for what it does: `build-docs-and-coverage-report.yml` when the solution publishes a
 coverage report into the site, `build-docs.yml` when it does not. The file name and the workflow's
@@ -172,8 +177,8 @@ CI. If the file is already present and correct, leave it; if it's missing or sta
 ### 8. Report
 
 Summarize: files created/changed (including the workflow), which conditional sections were included and
-why, and the two commands to preview (`hugo -s docs server`) and to finish wiring the submodule
-(`git submodule update --init`). Remind the user to enable GitHub Pages (Settings → Pages → deploy from
+why, and the commands to preview (`hugo -s docs server`) and to finish wiring the theme
+(`git submodule update --init --recursive`, then `npm install` inside `docs/themes/docsy`). Remind the user to enable GitHub Pages (Settings → Pages → deploy from
 the `gh-pages` branch) if this is the repo's first docs deploy.
 
 ## Quick Reference
@@ -200,7 +205,7 @@ the `gh-pages` branch) if this is the repo's first docs deploy.
 - `references/identity.md` — how author/links/URLs are resolved from git. Use verbatim.
 - `references/readme-template.md` — README skeleton and tone.
 - `references/fixed-sections.md` — verbatim Versioning / Build-test-publish / Legal blocks.
-- `references/hugo-setup.md` — Hugo site + theme submodule + Pages workflow.
+- `references/hugo-setup.md` — Hugo site + Docsy submodule + Pages workflow.
 - `references/mermaid-types.md` — common diagram types to offer, with examples.
 - `references/licenses.md` — how to fetch/fill license text.
 
@@ -215,5 +220,9 @@ the `gh-pages` branch) if this is the repo's first docs deploy.
 - **Overwriting an existing README without confirming.** Diff mentally; preserve anything hand-written.
 - **Forgetting `submodules: recursive` in the Pages workflow** — the theme won't be there on CI and the
   build fails.
+- **Skipping `npm install` inside `docs/themes/docsy`** — Docsy builds its CSS with PostCSS, so the
+  build fails locally and in CI without it.
+- **Listing every docs page under `[[menu.main]]`** — Docsy generates the sidebar from the page tree;
+  the navbar is for top-level links only. Order pages with `weight`.
 - **Hardcoding a different identity.** Author, email, and personal links always come from
   `references/identity.md`.
