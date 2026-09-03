@@ -1,3 +1,5 @@
+#!/usr/bin/env pwsh
+
 <#
 .SYNOPSIS
     Copies the skills in this repo to the target skill folders defined in .env.
@@ -23,6 +25,9 @@
     ./sync-skills.ps1
     ./sync-skills.ps1 -Target CODEX_SKILLS
     ./sync-skills.ps1 -WhatIf
+
+    On Linux/macOS run it with PowerShell 7:
+    pwsh ./sync-skills.ps1
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(
