@@ -48,6 +48,13 @@ over whatever a dependency asked for, so every assembly sees one EF Core.
 **Do not remove them because "nothing references them".** That is the reason
 they are there.
 
+`ArturRios.Output` is the opposite case and is listed for the opposite reason:
+it arrives transitively through `ArturRios.Mediator` and `ArturRios.Util.WebApi`,
+so a build succeeds without it — but Command, Query and WebApi all name
+`DataOutput<T>` / `ProcessOutput` / `PaginatedOutput<T>` in their own signatures.
+It is a real dependency of those projects, not an implementation detail of
+another one, and the codebase declares what it uses directly.
+
 ## Directory.Packages.props
 
 Written to the repository root. `{{version}}` is what step 1 resolved.
@@ -73,6 +80,7 @@ Written to the repository root. `{{version}}` is what step 1 resolved.
     <PackageVersion Include="ArturRios.Data.PostgreSql" Version="{{version}}" />
     <PackageVersion Include="ArturRios.Data.Relational.Core" Version="{{version}}" />
     <PackageVersion Include="ArturRios.Mediator" Version="{{version}}" />
+    <PackageVersion Include="ArturRios.Output" Version="{{version}}" />
     <PackageVersion Include="ArturRios.Util" Version="{{version}}" />
     <PackageVersion Include="ArturRios.Util.WebApi" Version="{{version}}" />
   </ItemGroup>

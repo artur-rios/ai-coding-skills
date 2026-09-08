@@ -11,6 +11,20 @@ without any per-project configuration.
 `// Given`, `// When`, `// Then` when the sections are not obvious from the
 shape.
 
+## Assert on envelopes, not on thrown exceptions
+
+Handlers return outcomes, so a failure test asserts on what came back:
+
+```csharp
+Assert.False(output.Success);
+Assert.Contains(ThingMessages.ThingNotFound, output.Errors);
+```
+
+`Assert.ThrowsAsync` in a handler test is a sign the handler throws for a
+business rule, which this codebase does not do — fix the handler, not the test.
+Functional tests assert the status the message map produces (404, 409, 403),
+which is the same rule seen from the other end.
+
 ## Project files
 
 Every test project: `net10.0`, `Nullable`, `ImplicitUsings`,

@@ -67,12 +67,55 @@ controller action, registration, tests.
 
 ## Rules that are not negotiable
 
-**Handlers return `DataOutput<T>`; they do not throw.** Failures are added to the
-output with `output.AddError(...)` / `output.WithErrors(...)`, using a `const`
-from the entity's `*Messages`. Success is
+**Errors are values, not exceptions.** Every outcome a caller can provoke — not
+found, already exists, not allowed, invalid input, precondition unmet — is
+returned on an output envelope. `Success` is derived: it is `true` exactly when
+`Errors` is empty, so adding an error *is* how failure is signalled.
+
+Pick the envelope by what the operation returns. All three are in
+`ArturRios.Output`:
+
+| Returns | Envelope |
+|---|---|
+| nothing — a delete, a toggle, a command with no payload | `ProcessOutput` |
+| one resource | `DataOutput<T>` |
+| a listing | `PaginatedOutput<T>` |
+
+Failures use `output.AddError(...)` / `output.WithErrors(...)` with a `const`
+from the entity's `*Messages`; success uses
 `output.WithData(...).WithMessage(...)`. The message is what selects the HTTP
-status, so a string typed inline instead of referenced from `*Messages` silently
-falls through to the resolver's default.
+status, so a string typed inline rather than referenced from `*Messages` silently
+falls through to the resolver's 400 default.
+
+```csharp
+var thing = await reader.Query().FirstOrDefaultAsync(x => x.PublicId == command.Id);
+
+if (thing is null)
+{
+    return output.WithError(ThingMessages.ThingNotFound);   // → 404 via ThingMessageMap
+}
+```
+
+**Nothing in the request path catches.** Handlers, controllers, services and
+repositories contain no `try`/`catch`. A genuine exception — a bug, a dependency
+that broke its contract — propagates to `ExceptionMiddleware`, which logs it and
+writes the same JSON envelope every other failure uses. A `catch` here either
+swallows a defect or re-encodes it as a worse message than the middleware would
+produce, and costs the stack trace.
+
+Two things still throw, and neither is an exception to the rule:
+
+- **Startup misconfiguration** — a missing signing secret, an unset connection
+  string, a schema behind its migrations. No request is in flight and no envelope
+  has a reader, so failing fast is the only way the problem is seen at all.
+- **`DatabaseHealthCheck`** — the one sanctioned `catch` in the codebase, because
+  reporting the fault *is* the operation's output. That is the test for any
+  future one: catch only where the caught failure is the result, never where it
+  is an error path.
+
+`CustomException(string[] messages)` exists for a throw that must carry
+caller-safe text to the middleware. Reaching for it in a handler means the
+outcome belonged on an envelope.
 
 **Repositories, not `DbContext`, in handlers.** Depend on
 `IAsyncReadOnlyRepository<T>` for reads and `IAsyncRepository<T>` for writes, and
@@ -112,7 +155,10 @@ source of the published OpenAPI document.
 Named `GivenSomeCondition_WhenSomeAction_ThenSomeOutcome`.
 
 - **Unit** — `[UnitFact]` / `[UnitTheory]`, `AsyncFakeRepository<T>`, Moq, Bogus.
-  One per handler branch, including every failure.
+  One per handler branch, including every failure. Assert on the returned
+  envelope — `Assert.False(output.Success)` and the expected `*Messages` const in
+  `output.Errors`. A test written with `Assert.ThrowsAsync` is testing behaviour
+  this codebase does not have.
 - **Functional** — `[FunctionalFact]`, `WebApiTest<Program>`, the shared
   `PostgresFixture` container. Assert both the response and the resulting
   database state. Every endpoint gets its authorization outcomes covered: no

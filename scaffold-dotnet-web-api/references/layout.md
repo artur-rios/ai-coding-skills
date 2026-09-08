@@ -176,6 +176,9 @@ references.
   <ItemGroup>
     <PackageReference Include="ArturRios.Mediator" />
     <PackageReference Include="ArturRios.Data.Relational.Core" />
+    <!-- The handlers return DataOutput<T> / ProcessOutput, so this is a direct dependency even
+         though ArturRios.Mediator also brings it. -->
+    <PackageReference Include="ArturRios.Output" />
     <PackageReference Include="ArturRios.Util" />
     <PackageReference Include="FluentValidation" />
     <!-- Declared although ArturRios.Data.Relational.Core also brings it: the handlers use
@@ -193,8 +196,8 @@ references.
 
 ### Query
 
-Same packages as Command, minus
-`Microsoft.Extensions.DependencyInjection.Abstractions`. Three project
+Same packages as Command — `ArturRios.Output` included, for the same reason —
+minus `Microsoft.Extensions.DependencyInjection.Abstractions`. Three project
 references — `Domain`, `Shared`, and, with the comment above, `Data`:
 
 ```xml
@@ -246,6 +249,8 @@ references — `Domain`, `Shared`, and, with the comment above, `Data`:
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="ArturRios.Mediator" />
+    <!-- The controllers name DataOutput<T> / PaginatedOutput<T> in their action signatures. -->
+    <PackageReference Include="ArturRios.Output" />
     <PackageReference Include="ArturRios.Util.WebApi" />
     <!-- Declared although ArturRios.Data.Relational.Core also brings it: this project uses
          EntityFrameworkCore's async query operators directly. -->

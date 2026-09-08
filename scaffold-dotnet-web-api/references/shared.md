@@ -4,6 +4,20 @@ Namespace `<Prefix>.<Name>.Shared`. This project holds what Command and Query
 both need and neither owns: the canonical message vocabulary, the message →
 HTTP status maps, and the actor abstractions. It references no other project.
 
+## Why the messages exist at all
+
+The message vocabulary is the mechanism behind "business rules never throw". A
+handler signals failure by putting a `*Messages` const on the output envelope;
+`ResponseResolver` looks that first error up in the `*MessageMap` and picks the
+status. Nothing else turns an outcome into an HTTP response — which is why an
+error string typed inline falls through to the resolver's 400 default, and why an
+exception thrown instead of returned bypasses the map entirely and becomes a 500.
+
+The envelopes themselves come from `ArturRios.Output`: `ProcessOutput` when the
+operation returns nothing, `DataOutput<T>` for one resource,
+`PaginatedOutput<T>` for a listing. `Success` on all three is derived from
+`Errors` being empty.
+
 ## Messages/DataAccessMessageMap.cs
 
 The persistence layer classifies its failures into a small set of fixed,

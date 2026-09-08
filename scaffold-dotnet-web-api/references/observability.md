@@ -57,10 +57,15 @@ using Microsoft.EntityFrameworkCore;
 namespace <Prefix>.<Name>.Query.HealthChecks;
 
 /// <summary>
-///     Verifies the database connection with a trivial round-trip. Any failure — an unreachable
-///     database throws on execution — is reported as unhealthy rather than propagated, so the
-///     detailed check can still report the aggregate status.
+///     Verifies the database connection with a trivial round-trip.
 /// </summary>
+/// <remarks>
+///     This is the one class in the codebase that catches. Reporting the fault <em>is</em> this
+///     operation's output — the endpoint exists to answer "is the database reachable?", and an
+///     exception escaping it would turn a health report into a 500. That is the test for any future
+///     catch: allowed only where the caught failure is the result, never where it is an error path.
+///     Everything else lets exceptions reach <c>ExceptionMiddleware</c>.
+/// </remarks>
 public class DatabaseHealthCheck(AppDbContext context) : IServiceHealthCheck
 {
     public string ServiceName => "Database";
@@ -85,6 +90,13 @@ public class DatabaseHealthCheck(AppDbContext context) : IServiceHealthCheck
 Referencing `Data` from `Query` for this one class is the exception the scaffold
 makes; when the switch to a repository happens, remove the project reference
 again.
+
+Note what the handler above does **not** do: it never throws, and the aggregate
+status is computed from returned values. `GetDetailedHealthQueryHandler` returns
+`DataOutput<HealthCheckOutput?>` like every other query handler — an unhealthy
+dependency is data on a successful envelope, not an error, because the request to
+report health succeeded. The controller maps the reported status to 503; see
+`references/security.md`.
 
 ## Input/DetailedHealthQuery.cs
 

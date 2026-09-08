@@ -98,6 +98,11 @@ namespace <Prefix>.<Name>.Data.Configuration;
 ///     environment file before invoking <c>dotnet ef</c>. Diagnostics are disabled — design time
 ///     never needs them, and the tools may well be pointed at production.
 /// </summary>
+/// <remarks>
+///     Throwing is correct here and is not the exception-for-flow the codebase forbids: this runs at
+///     design time with no request in flight and no output envelope anyone would read, so failing
+///     fast is the only way an operator sees the missing variable at all.
+/// </remarks>
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {
     private const string ConnectionStringVariable = "<NAME>_DATA_CONNECTIONSTRING";
@@ -216,6 +221,10 @@ public class DatabaseSeeder(
     ///     Fails fast when the database is behind the code. Starting against a stale schema produces
     ///     an unrelated error on the first query instead of naming the actual problem.
     /// </summary>
+    /// <remarks>
+    ///     One of the codebase's few throws, and in its sanctioned category: start-up
+    ///     misconfiguration, before any request exists to answer with an envelope.
+    /// </remarks>
     private async Task EnsureSchemaIsUpToDateAsync(CancellationToken cancellationToken)
     {
         var pending = (await context.Database.GetPendingMigrationsAsync(cancellationToken)).ToList();

@@ -59,7 +59,8 @@ want them, they want **scaffold-dotnet-project**, not this skill.
 | `ArturRios.Data.Relational.Core` | `Entity`, `BaseDbContext`, `IAsyncRepository<T>` / `IAsyncReadOnlyRepository<T>`, `RelationalErrors` |
 | `ArturRios.Data.PostgreSql` | `AddPostgreSqlProvider()`, the Npgsql wiring |
 | `ArturRios.Util.WebApi` | `WebApiStartup`, `ResponseResolver`, `[RoleRequirement]`, `ExceptionMiddleware`, `AuthenticationMiddleware`, `AddTokenAuthentication`, Swagger helpers |
-| `ArturRios.Util` | `DataOutput<T>`, `PaginatedOutput<T>`, `HttpStatusCodes` |
+| `ArturRios.Output` | `ProcessOutput`, `DataOutput<T>`, `PaginatedOutput<T>`, `CustomException` — the envelopes every handler returns |
+| `ArturRios.Util` | `HttpStatusCodes` |
 | `ArturRios.Util.Test` | `[UnitFact]` / `[UnitTheory]` / `[FunctionalFact]`, `WebApiTest<TProgram>`, `FakeRepository<T>` |
 | `FluentValidation`, EF Core 10, `EFCore.NamingConventions`, Serilog, Swashbuckle, xUnit, Moq, Bogus, Testcontainers.PostgreSql | the rest |
 
@@ -82,6 +83,76 @@ and the **name** (e.g. `Heimdall`).
 
 Throughout the reference files, `<Prefix>.<Name>` means the full project prefix,
 `<NAME>` the env-var prefix, and `<name>` the lower-cased schema/image name.
+
+## Errors are values, not exceptions
+
+Two rules. They are the ones an agent writing idiomatic C# from habit breaks
+first, so they are stated before the red flags rather than buried in a reference
+file.
+
+### 1. Business rules and application flow never throw
+
+Every outcome a caller can provoke — not found, already exists, not allowed,
+invalid input, precondition unmet — is a **value on an output envelope**, never
+an exception. `Success` is derived: it is `true` exactly when `Errors` is empty,
+so adding an error *is* how failure is signalled.
+
+Pick the envelope by what the operation returns:
+
+| The operation returns | Use | Lives in |
+|---|---|---|
+| nothing — a delete, a toggle, a command with no payload | `ProcessOutput` | `ArturRios.Output` |
+| one resource | `DataOutput<T>` | `ArturRios.Output` |
+| a listing | `PaginatedOutput<T>` | `ArturRios.Output` |
+
+All three carry `AddError`/`WithError(s)`, `AddMessage`/`WithMessage(s)`,
+`Success` and `Timestamp`. Every error string is a `const` from the entity's
+`*Messages` class, because `ResponseResolver` picks the HTTP status by looking
+the first error up in the `*MessageMap` — a string typed inline silently falls
+through to the 400 default.
+
+```csharp
+// Not found is an outcome, not an exception.
+var thing = await reader.Query().FirstOrDefaultAsync(x => x.PublicId == command.Id);
+
+if (thing is null)
+{
+    return output.WithError(ThingMessages.ThingNotFound);   // → 404 via the map
+}
+```
+
+### 2. No try/catch in the request path — `ExceptionMiddleware` owns exceptions
+
+A genuine exception — a bug, a dependency that broke its contract — propagates
+untouched to `ExceptionMiddleware`, which logs it and writes the same JSON error
+envelope every other failure uses. Handlers, controllers, services and
+repositories catch **nothing**. A `catch` in the request path either swallows a
+defect or re-encodes it as a worse message than the middleware would produce.
+
+The persistence layer is the shape to copy: repositories return a classified
+result and `DataAccessMessageMap` maps it, so a unique-index race is a 409 rather
+than a caught-and-rethrown anything.
+
+### What still throws, and why that is not an exception to the rule
+
+| Case | Throws? | Why |
+|---|---|---|
+| Business rule, validation, authorization, not found | **Never** | The caller provoked it; it is an outcome. |
+| Misconfiguration at startup — missing signing secret, unset connection string, schema behind | **Yes, fail fast** | No request is in flight and no envelope has a reader. Starting half-configured fails later, opaquely, in front of a user. |
+| A bug or a broken dependency mid-request | **Yes, uncaught** | It reaches `ExceptionMiddleware`, which is the single place that turns it into a response. |
+
+`CustomException(string[] messages)` in `ArturRios.Output` exists for the rare
+throw that must carry caller-safe text to the middleware. Reaching for it in a
+handler means the outcome belonged on an envelope instead.
+
+### The one sanctioned `catch` in the whole scaffold
+
+`DatabaseHealthCheck` catches, because **reporting the fault is the operation's
+entire output** — the endpoint exists to answer "is the database reachable?", and
+an exception escaping it would turn a health report into a 500. That is the test
+for any future exception: catching is allowed only where the caught failure *is*
+the result, never where it is an error path. Nothing else in the scaffold
+catches, and a second one needs the same sentence written next to it.
 
 ## Red Flags — STOP and Re-read the Procedure
 
@@ -106,6 +177,18 @@ Throughout the reference files, `<Prefix>.<Name>` means the full project prefix,
   declares the Data Protection key ring and `Startup` persists keys to it. Create
   the initial migration (step 4); without it the API builds, tests green, and
   fails the first time Data Protection writes a key.
+- "Throwing `NotFoundException` here is cleaner than threading an error through
+  the output" → NO. Not found is an outcome. `output.WithError(ThingMessages.ThingNotFound)`
+  is what makes it a 404 instead of a 500.
+- "I'll wrap this repository call in a try/catch so the error message is nicer"
+  → NO. Nothing in the request path catches. `ExceptionMiddleware` is registered
+  first for exactly this, and the persistence layer already classifies its own
+  failures.
+- "A `catch` that logs and rethrows is harmless" → NO. It is a second log line
+  for an exception the middleware already logs, at a place that knows less about
+  it. Delete it.
+- "This handler returns nothing, so it can be `Task` / throw on failure" → NO.
+  An operation with no payload returns `ProcessOutput`. Failure is an error on it.
 - "I'll write the handler and mediator calls from the shapes in the reference
   files" → NO, not without checking. Versions are resolved live, so a major bump
   since these files were written changes signatures — `HandleAsync` gained a
@@ -122,6 +205,10 @@ Throughout the reference files, `<Prefix>.<Name>` means the full project prefix,
 | "I'll register handlers with assembly scanning instead of by hand" | Explicit registration in `Startup.AddDependencies` is how the codebase states its surface. Scanning hides a missing validator until runtime. |
 | "The docs site and api-client are optional extras" | The user asked for the heimdall patterns. They are part of them. |
 | "The reference files show the code, so I can copy it straight in" | They show the shape at the version they were written against. The skill resolves versions live; verify signatures first (step 2b). |
+| "Exceptions are the idiomatic way to signal failure in C#" | Not here. `Success` is derived from `Errors`, `ResponseResolver` picks the status from the first error, and the whole message-to-status mechanism only works on returned values. |
+| "A try/catch makes the failure message clearer" | It makes it *different* — and hides the stack trace `ExceptionMiddleware` would have logged. Clearer messages come from the `*Messages` const you return, not from a catch. |
+| "The health check catches, so catching must be fine" | It catches because the caught failure *is* its output. That is the entire test, and it is met in exactly one class. |
+| "Startup throws, so throwing is allowed" | Startup throws with no request in flight and no envelope to return. A request-path throw has both. |
 
 ## Procedure
 
@@ -221,6 +308,11 @@ deliberately **outside** the solution.
 `HealthStatuses`, `DetailedHealthQuery`, `GetDetailedHealthQueryHandler`,
 `HealthCheckOutput`, `ServiceHealthOutput`, and the Serilog configuration.
 
+This is the first code that returns an envelope, so it is where *Errors are
+values, not exceptions* starts being enforced: the handler returns
+`DataOutput<HealthCheckOutput?>` and never throws, and `DatabaseHealthCheck` is
+the only class in the scaffold permitted a `catch`.
+
 `Command/` gets its `Handlers/`, `Input/`, `Input/Validation/`, `Output/`, and
 `Services/` folders with a `.gitkeep` in each — empty, because there is no
 domain yet.
@@ -316,6 +408,9 @@ secrets, and create the first migration once they add their first entity.
 | Package versions | Queried from nuget.org at scaffold time; `Microsoft.*` runtime packages all share one 10.x version. |
 | Solution file | `src/<Prefix>.<Name>.sln`, created with `--format sln`. |
 | Handler failure | `output.AddError(...)`, never `throw`. |
+| Output envelope | `ProcessOutput` (no payload) / `DataOutput<T>` (one) / `PaginatedOutput<T>` (a listing), all from `ArturRios.Output`. |
+| try/catch in the request path | None. `ExceptionMiddleware` owns exceptions. The one sanctioned catch is `DatabaseHealthCheck`. |
+| Throwing | Startup misconfiguration only — fail fast, before any request. |
 | Identifiers | `PublicId` (GUID) outside, `Id` (bigint) inside. |
 | DI registration | Explicit, in `Startup.AddDependencies`. No assembly scanning. |
 | Migrations | One initial migration, for the Data Protection key ring. Never applied on startup — the entrypoint or `scripts/migrations.py` applies them. |
@@ -324,6 +419,17 @@ secrets, and create the first migration once they add their first entity.
 
 ## Common Mistakes
 
+- **Throwing for a business outcome.** A `NotFoundException` becomes a 500 with
+  no message map behind it; the same condition returned as an error on the
+  envelope is a 404 with the exact text the caller needs. This is the single most
+  likely thing to go wrong when someone writes a handler from C# habit.
+- **Adding a try/catch "just in case".** It swallows the stack trace
+  `ExceptionMiddleware` exists to log, and produces a message that knows less
+  than the middleware's. The pipeline order in `Startup.Build` is what makes the
+  catch unnecessary.
+- **Returning `Task` from a command handler with nothing to return.** That is
+  what `ProcessOutput` is for — otherwise failure has nowhere to go but an
+  exception.
 - **Inventing a sample domain.** A `Widget` entity is a thing the first real
   feature has to delete, and its half-right shape is what the next agent copies.
 - **Hardcoding versions.** The props file is generated from live nuget.org data.

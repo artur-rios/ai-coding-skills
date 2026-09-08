@@ -84,9 +84,31 @@ docs/  scripts/  api-client/  docker/  .github/workflows/
 Directory.Packages.props  Dockerfile  docker-compose.yml  README.md  LICENSE
 ```
 
+## Two rules it enforces
+
+The skill states these before its red flags, because they are what an agent
+writing idiomatic C# from habit breaks first:
+
+- **Errors are values, not exceptions.** Every outcome a caller can provoke —
+  not found, already exists, not allowed, invalid input — is returned on an
+  `ArturRios.Output` envelope: `ProcessOutput` when the operation returns
+  nothing, `DataOutput<T>` for one resource, `PaginatedOutput<T>` for a listing.
+  `Success` is derived from `Errors` being empty, and `ResponseResolver` picks
+  the HTTP status by looking the first error up in the entity's message map — so
+  a thrown exception bypasses the whole mechanism and becomes a 500.
+- **No try/catch in the request path.** `ExceptionMiddleware` is the single
+  exception handler; a genuine fault propagates to it, gets logged with its
+  stack trace, and is written as the same JSON envelope. Handlers, controllers,
+  services and repositories catch nothing.
+
+Two things still throw and are documented as such: start-up misconfiguration
+(fail fast, no request in flight, no envelope anyone would read), and
+`DatabaseHealthCheck` — the one sanctioned `catch`, because reporting the fault
+*is* that operation's output. That is the stated test for any future one.
+
 ## The stack
 
-`ArturRios.Mediator`, `ArturRios.Data.Relational.Core`,
+`ArturRios.Output`, `ArturRios.Mediator`, `ArturRios.Data.Relational.Core`,
 `ArturRios.Data.PostgreSql`, `ArturRios.Util`, `ArturRios.Util.WebApi`,
 `ArturRios.Util.Test`, FluentValidation, EF Core 10 with
 `EFCore.NamingConventions`, Serilog, Swashbuckle, xUnit, Moq, Bogus,

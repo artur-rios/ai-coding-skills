@@ -83,6 +83,12 @@ public class Startup(string[] args) : WebApiStartup(args)
         BuildApp();
         ConfigureApp();
 
+        // ExceptionMiddleware is the codebase's only exception handler: nothing in the request path
+        // catches, so a bug or a broken dependency reaches here, gets logged with its stack trace,
+        // and is written as the same JSON envelope every other failure uses. Business outcomes never
+        // arrive as exceptions -- those are errors on a returned ProcessOutput / DataOutput<T> /
+        // PaginatedOutput<T>, which ResponseResolver maps to a status.
+        //
         // The two middlewares are registered around UseSwagger rather than before it, and the order
         // is the whole point.
         //
@@ -275,6 +281,11 @@ access until an operator adds one — visible and quickly fixed. Defaulting to
     ///     empty one every authenticated request dies inside the token validator with an opaque
     ///     IDX10703, so a missing secret fails startup instead.
     /// </summary>
+    /// <remarks>
+    ///     This throw is the sanctioned kind — start-up misconfiguration, with no request in flight
+    ///     and no envelope to return. A business rule in a handler never throws; it returns an error
+    ///     on its output.
+    /// </remarks>
     /// <remarks>
     ///     The previous-secret variable is how a signing secret is replaced without signing everybody
     ///     out. Both secrets are handed to JwtConfiguration.Keys, so a token signed with either is
