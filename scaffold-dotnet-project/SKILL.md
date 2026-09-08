@@ -1,6 +1,6 @@
 ---
 name: scaffold-dotnet-project
-description: Use when the user wants to create or scaffold a new .NET project or solution from scratch in an empty or greenfield directory — running `dotnet new` with the right template, picking folder structure (DDD or basic), and creating docs/src/tests layout with README and LICENSE. Triggers on "scaffold a .NET project", "create a new dotnet solution", "bootstrap a .NET project", "start a new C# project". Not for adding a project to an existing solution: it stops if the directory already contains a `.sln` or `.csproj`, and asks before overwriting any file it would write.
+description: Use when the user wants to create or scaffold a new .NET project or solution from scratch in an empty or greenfield directory — running `dotnet new` with the right template, picking folder structure (DDD or basic), and creating docs/src/tests layout with README and LICENSE. Triggers on "scaffold a .NET project", "create a new dotnet solution", "bootstrap a .NET project", "start a new C# project". Not for adding a project to an existing solution: it stops if the directory already contains a `.sln` or `.csproj`, and asks before overwriting any file it would write. Not for a layered DDD + CQRS web API in the heimdall style — that is scaffold-dotnet-web-api.
 ---
 
 # Scaffold .NET Project
@@ -32,6 +32,13 @@ this skill writes.** Check before asking anything (step 0).
   .NET project in it.
 
 Skip / adapt if:
+- The user wants a **layered DDD + CQRS web API** in the heimdall style —
+  Domain / Application (Command, Query, Shared) / Infrastructure / Presentation,
+  `ArturRios.Mediator`, EF Core + PostgreSQL, JWT role attributes, Testcontainers
+  tests, Docker and CI — use **scaffold-dotnet-web-api**, which builds the whole
+  repository rather than a `dotnet new` skeleton. This skill stays the generic
+  scaffolder: class libraries, console apps, workers, and web APIs that are not
+  built on that stack.
 - The user is adding a project to an **existing** solution — use the solution's
   own conventions instead.
 - The user already has a `.csproj` or `.sln` and just wants a test project or
