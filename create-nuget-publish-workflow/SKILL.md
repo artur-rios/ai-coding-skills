@@ -8,7 +8,10 @@ description: Use when adding or generating a GitHub Actions workflow that publis
 ## Overview
 
 Generates a `.github/workflows/publish-package.yml` that packs a .NET project and
-pushes it to **nuget.org** and **GitHub Packages** on a version tag.
+pushes it to **nuget.org** and **GitHub Packages** on a version tag — but only a
+tag that points at a commit on `main` and names the version the csproj declares.
+Released code is what reaches `main` through a `release/*` pull request, so the
+workflow refuses anything else.
 
 **Core principle:** the repository decides the strategy, not you. Count the packable
 projects and let the count pick:
@@ -94,11 +97,15 @@ Both layouts are valid:
   `<TargetFramework>`; a wrong SDK fails at tag time.
 - "`release.py` is just ergonomics, the `@`-tags work without it" → NO. It is what
   makes per-package tagging usable, and it pushes tags one at a time on purpose.
+- "The tag-on-main step is redundant, only the owner pushes tags" → NO. It is what
+  stops a tag on a release or feature branch from publishing code that never
+  reached `main`. Keep it, and keep it before the build.
 
 | Rationalization | Reality |
 |---|---|
 | "A workflow that publishes nothing is harmless" | It is a broken CI file the user debugs months later, at the worst moment. Stop and ask. |
 | "The version check is fussy, packing is enough" | The tag and the csproj `<Version>` disagreeing is exactly the mistake the check exists to catch. |
+| "`--skip-duplicate` hides problems" | Re-running a publish after one feed succeeded and the other failed must not fail on the one that already has the package. The version check is what catches a wrong version. |
 | "They can add `NUGET_API_KEY` whenever" | Without it every publish fails. It is the one follow-up they cannot skip — say it. |
 | "I'll push all the version tags at once" | GitHub drops the push event past three tags in one push, so nothing publishes at all. |
 
@@ -148,16 +155,48 @@ unavailable), add its id to the `DEFERRED` set in `scripts/release.py` and add a
 matching guard in the workflow's "Locate project" step, so the script refuses to
 tag/push it and the workflow won't publish it.
 
-### 5. Report the follow-ups
+### 5. Align CONTRIBUTING.md, if the repository has one
+
+The release steps the workflow enforces belong in the repository's
+`CONTRIBUTING.md` `## Releasing` section. If the file exists, make that section say
+what the workflow now requires; if it does not, leave it and mention it in the report
+(`generate-nuget-lib-docs` writes one).
+
+- **Single-package:** cut `release/<version>` from `develop`, set `<Version>`,
+  finalize `CHANGELOG.md` (`## [Unreleased]` → `## [<version>] - <yyyy-mm-dd>`),
+  open the pull request into `main`; once merged, tag the merge commit on `main`
+  (`git switch main && git pull && git tag <version> && git push origin <version>`);
+  then a pull request from `main` back into `develop`.
+- **Multi-package:** the same, except the version bumps are made on the release
+  branch with `python scripts/release.py bump <project> {patch|minor|major}`, the
+  CHANGELOG headings are `## [<PackageId> <version>]`, and the tags are created and
+  pushed on `main` with `python scripts/release.py tag <project>` /
+  `push <project>` (or the interactive menu), dependencies first.
+- Close with: only the repository owner can push version tags, and the publish
+  workflow rejects tags that do not point at a commit on `main` or whose version
+  differs from the one in the csproj.
+
+Tag with the bare version (`1.2.3`) — the form the author's libraries use for
+every release since August 2026; older `v1.2.3` tags stay as history, and the
+workflow accepts both. In a repository outside that family, use the form its
+newest tag uses (`git tag --sort=-creatordate`).
+
+### 6. Report the follow-ups
 
 These are the user's responsibility, not yours — but they must be told:
 
 - Add the `NUGET_API_KEY` secret in the repo settings (`GITHUB_TOKEN` is
   automatic). The workflow needs `packages: write` permission (already set).
-- How to release: single-package → `git tag 1.2.3 && git push origin 1.2.3`
-  (tag must equal the csproj `<Version>`); multi-package → run
-  `python scripts/release.py` (interactive) or
-  `python scripts/release.py release <project> patch`.
+- How to release: tags are created on `main`, after the `release/*` pull request
+  is merged. Single-package → `git tag 1.2.3 && git push origin 1.2.3` on the merge
+  commit (tag must equal the csproj `<Version>`); multi-package → bump on the release
+  branch with `python scripts/release.py bump <project> patch`, then on `main` run
+  `python scripts/release.py` (interactive) or `tag <project>` and `push <project>`.
+  `release.py` refuses to bump on `main` and to tag anything that is not on
+  `origin/main`.
+- Protect the tags: the author's libraries carry a "Version tags" tag ruleset
+  (creation, update and deletion restricted to the repository admin), so only the
+  owner can trigger a publish.
 
 ## Quick Reference
 
@@ -168,6 +207,8 @@ These are the user's responsibility, not yours — but they must be told:
 | Which SDK version? | From `<TargetFramework>`, never hardcoded. |
 | Which package id? | `<PackageId>` as written; never the folder name. |
 | Who adds `NUGET_API_KEY`? | The user. Always say so. |
+| Which commits can publish? | Only commits on `main`. The workflow verifies it before building. |
+| Where are tags created? | On `main`, on the merge commit of the `release/*` pull request. |
 
 ### How the two workflows differ
 
@@ -175,14 +216,14 @@ These are the user's responsibility, not yours — but they must be told:
 |---|---|---|
 | Tag trigger | `'*'` (any tag; `v` prefix stripped) | `'*@*'` (`<PackageId>@<version>`) |
 | Version check | tag vs the one csproj `<Version>` | resolves package from tag, checks its `<Version>` |
-| `workflow_dispatch` | reason only | package id + version inputs |
-| Release helper | none (plain `git tag`) | `scripts/release.py` (bump/tag/push, per-package) |
+| `workflow_dispatch` | reason only; run it from the tag ("Use workflow from") | package id + version inputs |
+| Release helper | none (plain `git tag`) | `scripts/release.py` (bump on the release branch, tag/push on `main`, per-package) |
 | Layout assumed | any csproj path | `src/<PackageId>/<PackageId>.csproj` |
 | Explicit `<PackageId>` | not required | required — the tag addresses it |
 
-Both jobs are otherwise identical: checkout tag → setup .NET → validate version →
-restore → pack (Release) → `dotnet nuget push` to nuget.org then GitHub Packages,
-both with `--skip-duplicate`.
+Both jobs are otherwise identical: checkout tag → verify the tagged commit is on
+`main` → setup .NET → validate version → restore → pack (Release) →
+`dotnet nuget push` to nuget.org then GitHub Packages, both with `--skip-duplicate`.
 
 ## Common Mistakes
 
@@ -202,6 +243,11 @@ both with `--skip-duplicate`.
   hardcode `10.0.x` if the project targets something else.
 - **Forgetting the release ergonomics for multi-package.** The `release.py` script
   is what makes per-package `@`-tags usable — copy it, don't skip it.
+- **Dropping the "Verify tagged commit is on main" step**, or moving it after the
+  pack. A tag pushed from a release or feature branch would publish unreleased code.
+- **Telling the user to tag the release branch.** Tags go on the merge commit on
+  `main`, after the release pull request merges — the workflow rejects a tag whose
+  commit is not on `main`.
 - **Batch-pushing >3 tags at once.** GitHub drops the push event past three tags in
   one push, so nothing publishes. `release.py` already pushes tags one at a time;
   preserve that if you edit it.

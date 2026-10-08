@@ -7,7 +7,9 @@ name: Publish Package
 #         MyLib.Extras@1.0.0
 # The tag names which package to publish and at which version; the version
 # must match that project's <Version>. Packages are versioned independently,
-# so tag each release separately (dependencies first).
+# so tag each release separately (dependencies first). Tags are created on
+# main, after the release/* pull request that bumped the versions is merged;
+# a tag whose commit is not on main is rejected.
 #
 # Manual runs: use "Run workflow" and supply the package id and version.
 
@@ -34,13 +36,24 @@ jobs:
 
     steps:
       - name: Checkout ref
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.ref }}
 
+      # Only released code is published: the tag must point at a commit that
+      # reached main through a release/* pull request.
+      - name: Verify tagged commit is on main
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "::error::${GITHUB_REF_NAME} points at $(git rev-parse --short HEAD), which is not on main. Merge the release/* pull request into main and tag the merge commit."
+            exit 1
+          fi
+
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '__DOTNET_VERSION__'
 

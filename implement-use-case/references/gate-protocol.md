@@ -48,6 +48,12 @@ Show: the design for this repository, the plan sequenced test-first, how each
 `AF-xx` alternative flow maps to a failure path, and every assumption the
 specification did not settle.
 
+Show too the branch you will create and the base it targets. If a workflow document
+disagrees with the branching model the repository enforces — a Development Workflow
+Document still saying "branch from `main`" in a repository on the `develop` flow —
+name the file and section, and say you will follow the enforced model. Fixing the
+document is a separate change, not part of this use case.
+
 This is the cheapest gate. A misread requirement caught here costs a paragraph; it
 costs a rewrite at Gate 2.
 
@@ -69,19 +75,24 @@ result. If tests were skipped, filtered, or excluded, say which and why.
 
 Opening a pull request is outward-facing and hard to retract. It waits for a yes.
 
-Approval here also clears the README tracking update, since that change ships
-inside the same pull request. Say at this gate whether the README tracks issues
-and which row you will mark — including the marker you chose when the file has no
-completed row to copy.
+Approval here also clears the README tracking update and the CHANGELOG entry,
+since both ship inside the same pull request. Say at this gate:
+
+- whether the README tracks issues and which row you will mark — including the
+  marker you chose when the file has no completed row to copy;
+- the exact CHANGELOG entry and the `## [Unreleased]` subsection it goes under — or
+  that the repository has no `CHANGELOG.md`, so none will be written;
+- the base branch the pull request targets (`develop` on the `develop` flow, never
+  `main`).
 
 ### Gate 4 — after the human merges, before closing out
 
 The user reviews, merges, and deletes the branch. You do none of those. When they
 confirm the merge, ask before moving the issue to done and closing it.
 
-Confirm the README tracking landed with the merge. If it did not, report it and
-ask — editing the README outside a pull request is a change to the base branch,
-and that is the user's call.
+Confirm the README tracking and the CHANGELOG entry landed with the merge. If they
+did not, report it and ask — editing either outside a pull request is a change to
+the base branch, and that is the user's call.
 
 ## Actions that are always the human's
 
@@ -89,6 +100,9 @@ and that is the user's call.
 - **Merging.** Never merge, even with approval to open the pull request.
 - **Deleting the branch.** It goes with the merge.
 - **Force-pushing** to a shared branch, or rewriting published history.
+- **Releasing.** Cutting `release/*`, opening or merging a pull request into
+  `main`, and tagging a version are the repository owner's steps, per
+  `CONTRIBUTING.md`. A use case ends at its merge into the integration branch.
 
 You may prepare and push a branch, and open a pull request once Gate 3 clears.
 That is the boundary.

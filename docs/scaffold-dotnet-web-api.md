@@ -13,10 +13,22 @@ up; the entities, commands, and endpoints are yours to add.
   command/query handlers, FluentValidation, JWT authentication with role
   attributes, Serilog, rate limiting, CORS, Data Protection, Swagger.
 - Adds the repository furniture: Dockerfile with a migrations bundle,
-  `docker-compose.yml`, env templates, three GitHub Actions workflows, a
-  Hugo/Docsy documentation site, `.http` and Bruno API-client collections, and
-  the Python scripts for migrations, coverage, OpenAPI, and vulnerability
-  scanning.
+  `docker-compose.yml`, env templates, four GitHub Actions workflows (tests,
+  OpenAPI check, docs site, branch policy), a Hugo/Docsy documentation site,
+  `.http` and Bruno API-client collections, and the Python scripts for
+  migrations, coverage, OpenAPI, and vulnerability scanning.
+- Writes the three root documents, each for one reader: a `README.md` with
+  consumer and operator content only (what the API is, the docs, configure, run,
+  deploy) ending in short *Changelog* and *Contributing* sections; a
+  `CHANGELOG.md` in Keep a Changelog 1.1.0 form with a Semantic Versioning
+  statement and an `## [Unreleased]` entry for the scaffold; and a
+  `CONTRIBUTING.md` with prerequisites, project structure, build, the
+  `Category`-split test suites, migrations, the OpenAPI document, the docs site,
+  conventions, the branching model, commits and the changelog, versioning and
+  releasing.
+- Sets up the `develop` → `release/x.y.z` → `main` branching model: CI runs on
+  pull requests into, and pushes to, both branches, and `branch-policy.yml`
+  rejects any pull request that breaks the model.
 - Resolves every package version from nuget.org **at scaffold time** and writes
   them into `Directory.Packages.props`.
 - Writes `docs/conventions.md` into the new repository — the per-feature pattern,
@@ -81,7 +93,8 @@ src/<Prefix>.<Name>.sln
 tests/                           six xUnit projects + the Testcontainers harness
 tools/…OpenApiGen                writes docs/openapi/<name>.json (outside the solution)
 docs/  scripts/  api-client/  docker/  .github/workflows/
-Directory.Packages.props  Dockerfile  docker-compose.yml  README.md  LICENSE
+Directory.Packages.props  Dockerfile  docker-compose.yml
+README.md  CHANGELOG.md  CONTRIBUTING.md  LICENSE
 ```
 
 ## Two rules it enforces
@@ -91,9 +104,10 @@ writing idiomatic C# from habit breaks first:
 
 - **Errors are values, not exceptions.** Every outcome a caller can provoke —
   not found, already exists, not allowed, invalid input — is returned on an
-  `ArturRios.Output` envelope: `ProcessOutput` when the operation returns
-  nothing, `DataOutput<T>` for one resource, `PaginatedOutput<T>` for a listing.
-  `Success` is derived from `Errors` being empty, and `ResponseResolver` picks
+  `ArturRios.Output` envelope: `DataOutput<T>` for one resource — with an
+  empty `*CommandOutput` when a command returns nothing — and
+  `PaginatedOutput<T>` for a listing.
+  `Success` is derived from `Errors` being empty, and `ToActionResult` picks
   the HTTP status by looking the first error up in the entity's message map — so
   a thrown exception bypasses the whole mechanism and becomes a 500.
 - **No try/catch in the request path.** `ExceptionMiddleware` is the single
@@ -130,6 +144,26 @@ the skill. Two rules keep the graph coherent:
 - Everything else takes the highest stable version. Prerelease is skipped, and a
   package that resolves to nothing is a stop condition rather than a guess.
 
+## Branching and releases
+
+`feature/<name>` and `fix/<name>` branches are cut from `develop` and merged back
+into it. A release is a `release/x.y.z` branch cut from `develop` with no commits
+of its own — the CHANGELOG is finalized on `develop` first — merged into `main`
+with a merge commit and tagged `vx.y.z`. The generated `branch-policy.yml` (the
+same workflow `heimdall-api` runs) enforces all of it.
+
+Creating `develop`, making it the default branch and adding the rulesets
+(*Develop: PRs only*, *Main: release PRs only*, *Version tags*, with the required
+checks `test`, `docker` and `branch-policy`) are remote changes, so the skill
+lists them in its report for the user to make rather than making them.
+
+## The docs site does not copy the root documents
+
+The site's Changelog and Contributing pages render `CHANGELOG.md` and
+`CONTRIBUTING.md` from the repository root through a `repo-file` shortcode and
+two Hugo mounts, and the docs workflow rebuilds when either changes. There is no
+Testing or Releases page: that content has one home, `CONTRIBUTING.md`.
+
 ## Verification
 
 Before reporting, the skill runs `dotnet restore`, `dotnet build`, the unit
@@ -143,23 +177,26 @@ Python helper tests, the vulnerability scan, `openapi.py` and its `--check`, and
 container — a successful build proves nothing about the entrypoint or the
 migrations bundle.
 
-Every reference file in this skill was validated by scaffolding a throwaway API
-from it against the current package versions and running all of the above.
+The reference files were validated by scaffolding a throwaway API from them
+against the package versions current when they were written. Versions resolve
+live, so the skill re-reads the restored packages' public surface before writing
+code (step 2b) and lets the package win wherever a reference file disagrees.
 
 ## Files
 
 | File | Contents |
 |---|---|
-| `SKILL.md` | Overview, precondition, stack, naming, red flags, the ten-step procedure, quick reference, common mistakes. |
+| `SKILL.md` | Overview, precondition, stack, naming, red flags, the procedure, quick reference, common mistakes. |
 | `references/layout.md` | Directory tree, `dotnet new` commands, reference graph, every `.csproj`. |
 | `references/packages.md` | Version discovery rules and the `Directory.Packages.props` template. |
 | `references/data.md` | `AppDbContext`, diagnostics options, design-time factory, seeder, the entity-map convention. |
 | `references/shared.md` | `DataAccessMessageMap`, `PaginationMessages`, the actor abstractions, the message-pair convention. |
 | `references/observability.md` | The health-check slice, `PaginatedQueryValidator`, the Serilog configuration. |
-| `references/startup.md` | `Program`, `Startup`, middleware order, JWT key rotation, rate limiting, CORS, model binding, Swagger, settings and env templates. |
+| `references/startup.md` | `Program`, `Startup` on Util.WebApi 5.x's `WebApiStartup`, the standard pipeline, JWT key rotation, rate limiting, CORS, model binding, Swagger, settings and env templates. |
 | `references/security.md` | `Roles`, identity user and mapper, token issuer, actor plumbing, `HealthCheckController`. |
 | `references/testing.md` | Test `.csproj` files, `PostgresFixture`, the collection, test tokens, run settings, the health-check tests. |
 | `references/docker.md` | Dockerfile with the migrations bundle, entrypoint, Compose, env examples. |
-| `references/tooling.md` | The Python scripts, the OpenAPI generator, the three workflows, the docs site, the API client, the README outline. |
+| `references/tooling.md` | The Python scripts, the OpenAPI generator, the four workflows, the docs site and its mounts, the API client. |
+| `references/repo-docs.md` | The README outline and the `CHANGELOG.md` and `CONTRIBUTING.md` templates. |
 | `references/conventions-template.md` | The `docs/conventions.md` written into the generated repository. |
-| `references/files/` | `.editorconfig`, `.gitignore`, `.gitattributes`, `.dockerignore`, copied verbatim. |
+| `references/files/` | Copied verbatim to the repository root: `.editorconfig`, `.gitignore`, `.gitattributes`, `.dockerignore`, `.github/workflows/branch-policy.yml`, and the docs site's `repo-file` shortcode with its Changelog and Contributing pages. |

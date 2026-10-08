@@ -11,6 +11,9 @@ module, or function), with two hard rules: **Given-When-Then test names** and
   exceptions, state/side effects, and collaborator interactions.
 - Detects and matches the project's existing test framework and assertion/mocking
   libraries rather than introducing new ones.
+- Marks the new test classes with the project's category — e.g.
+  `[Trait("Category", "Unit")]` — when its CI runs unit and functional tests as
+  separate `--filter "Category=…"` jobs, so the new tests are not silently skipped.
 - Runs the suite and reports the result, plus any real defects the tests surfaced.
 
 ## When to use it
@@ -55,8 +58,8 @@ description text.
    invalid input, empty/missing, errors, state/side effects, interactions) so
    coverage is visible before any test is written.
 4. **Write the tests** — one behavior per test, Arrange-Act-Assert body under a
-   Given-When-Then name, data-driven tests for input families, mocks only for
-   external collaborators.
+   Given-When-Then name, the project's category marker on each test class,
+   data-driven tests for input families, mocks only for external collaborators.
 5. **Run the suite** and fix genuine test bugs; real code defects are reported, not
    hidden by adjusting assertions.
 6. **Report** an overview: target, scenario list, pass/fail numbers, and any gaps

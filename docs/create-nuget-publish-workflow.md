@@ -49,12 +49,15 @@ Skip it if the repo publishes somewhere other than NuGet / GitHub Packages.
 3. **Write the workflow** from the matching template in `templates/`, filling the
    `__UPPER_CASE__` placeholders.
 4. For multi-package, also copy `templates/release.py` to `scripts/release.py`.
-5. **Report the follow-ups** you must do yourself (see below).
+5. **Align `CONTRIBUTING.md`'s Releasing section**, when the repo has one, with
+   what the workflow now enforces.
+6. **Report the follow-ups** you must do yourself (see below).
 
-Both jobs otherwise behave identically: checkout the tag → set up .NET → validate
-the tag version against the csproj `<Version>` → restore → pack (Release) →
-`dotnet nuget push` to nuget.org then GitHub Packages, each with
-`--skip-duplicate`.
+Both jobs otherwise behave identically: checkout the tag → **verify the tagged
+commit is on `main`** → set up .NET → validate the tag version against the csproj
+`<Version>` → restore → pack (Release) → `dotnet nuget push` to nuget.org then
+GitHub Packages, each with `--skip-duplicate`. Only released code — what reached
+`main` through a `release/*` pull request — can be published.
 
 ## What it refuses to do
 
@@ -66,6 +69,7 @@ the tag version against the csproj `<Version>` → restore → pack (Release) �
 | Hardcode the SDK version | Derives it from `<TargetFramework>` |
 | Infer the package id from the folder name | Reads `<PackageId>` — a guessed id produces tags nothing responds to |
 | Skip `release.py` as mere ergonomics | Copies it; it is what makes per-package tagging usable, and it pushes tags one at a time on purpose |
+| Drop the tag-on-main check because only the owner tags | Keeps it, before the build; a tag on any other branch publishes unreleased code |
 
 ## Files in this skill
 
@@ -74,16 +78,21 @@ the tag version against the csproj `<Version>` → restore → pack (Release) �
 | `SKILL.md` | The skill instructions. |
 | `templates/single-package.yml` | Workflow for a one-package repo. |
 | `templates/multi-package.yml` | Workflow for a multi-package repo. |
-| `templates/release.py` | Interactive bump/tag/push helper for multi-package repos. |
+| `templates/release.py` | Interactive bump/tag/push helper for multi-package repos: bumps on the release branch (refuses `main`), tags and pushes only commits on `origin/main`. |
 
 ## After it runs — your responsibilities
 
 - Add the `NUGET_API_KEY` secret in the repo settings (`GITHUB_TOKEN` is
   automatic; the workflow already requests `packages: write`).
-- **Release, single-package:** `git tag 1.2.3 && git push origin 1.2.3`
+- **Release, single-package:** set `<Version>` and finalize `CHANGELOG.md` on a
+  `release/<version>` branch, merge its pull request into `main`, then tag the merge
+  commit: `git switch main && git pull && git tag 1.2.3 && git push origin 1.2.3`
   (the tag must equal the csproj `<Version>`).
-- **Release, multi-package:** `python scripts/release.py` (interactive) or
-  `python scripts/release.py release <project> patch`.
+- **Release, multi-package:** on the release branch,
+  `python scripts/release.py bump <project> patch`; after the merge, on `main`,
+  `python scripts/release.py` (interactive) or `tag <project>` and `push <project>`.
+- Restrict who can create version tags (the author's libraries use a "Version tags"
+  ruleset), since a tag is a publish.
 
 > The release helper pushes tags one at a time on purpose — GitHub drops the push
 > event past three tags in a single push, so batch-pushing would publish nothing.

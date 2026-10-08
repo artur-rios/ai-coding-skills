@@ -13,21 +13,18 @@ git configuration, asking the user only for what git can't provide.
 | GitHub Pages base URL | `https://<owner>.github.io/<repo>` |
 | Copyright holder | Same as author name. |
 
-## Docs theme submodule
+## Docs theme package
 
-The Hugo site uses **Docsy**, Google's technical-documentation theme, added as a git submodule:
-
-```
-https://github.com/google/docsy.git
-```
+The Hugo site uses **Docsy**, Google's technical-documentation theme, installed from npm as `@docsy/theme`
+(declared in `docs/package.json`, loaded with `theme = '@docsy/theme'` and `themesDir = 'node_modules'`).
 
 Docsy is the default for this skill — don't substitute another theme unless the user asks. If they do,
-adjust the submodule URL, `theme = ` in `hugo.toml`, and the content layout in `references/hugo-setup.md`.
+adjust `docs/package.json`, `theme = ` in `hugo.toml`, and the content layout in `references/hugo-setup.md`.
 
-## Helper toolsets (optional, referenced in "Build, test and publish")
+## Helper toolsets (optional, referenced in CONTRIBUTING.md)
 
-These are optional public helper repos linked from the README's "Build, test and publish" section. Keep
-them as defaults or drop/replace them per the project:
+These are optional public helper repos linked from the Prerequisites section of `CONTRIBUTING.md`
+(`references/repo-files.md`). Keep them as defaults or drop/replace them per the project:
 
 - Dotnet Tools — `https://github.com/artur-rios/dotnet-tools`
 - Python Dotnet Tools — `https://github.com/artur-rios/python-dotnet-tools`
@@ -38,7 +35,7 @@ Docs and license badges are always applicable when those things exist:
 
 ```markdown
 [![Docs](https://img.shields.io/badge/docs-website-blue)](https://<owner>.github.io/<repo>)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/<owner>/<repo>/blob/main/LICENSE)
 ```
 
 Add one shields.io NuGet version badge per published package:

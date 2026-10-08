@@ -55,7 +55,8 @@ on. This is the first unit of work; no use-case issue starts before it closes.
 ## Definition of Done
 - [ ] <one checkbox per IR-xx above>
 - [ ] The test project runs and the empty suite passes with `<test command>`.
-- [ ] `README.md` installation and testing steps work on a clean clone.
+- [ ] The `README.md` installation steps and the `CONTRIBUTING.md` build and test
+      steps work on a clean clone.
 ```
 
 Everything in its scope comes from a document. If the Operations & Infrastructure
