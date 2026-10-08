@@ -19,13 +19,16 @@ If any of these fails, the run ends in step 2 and nothing is created.
 | --- | --- | --- |
 | Authenticated tooling | `gh auth status` | Merging and closing need it; discovering that at use case 1 wastes the setup |
 | Merge permission | `gh repo view --json viewerPermission` | Without write access the batch cannot do the thing it was authorized to do |
-| No required review | Repository branch protection on the base branch | A required approving review means a human is in the loop by policy — respect it, do not route around it |
+| No required review | Classic branch protection **and** rulesets on the base branch: `gh api repos/{owner}/{repo}/rulesets`, `gh api repos/{owner}/{repo}/rules/branches/<base>` — the `pull_request` rule's `required_approving_review_count` must be 0 | A required approving review means a human is in the loop by policy — respect it, do not route around it |
+| An allowed merge method | The `pull_request` rule's `allowed_merge_methods` (`merge`, `squash` on `develop`) and the repository's merge settings | Merging with a method the ruleset refuses fails at use case 1 |
+| The right base branch | The enforced branching model — `CONTRIBUTING.md`, `.github/workflows/branch-policy.yml`, a `develop` branch (see `doc-discovery.md` §3) | Use case work merges into the integration branch; `main` takes only release pull requests, and the Branch Policy check rejects anything else |
 | Clean tree | `git status --porcelain` is empty | Uncommitted work would be swept into the first branch |
 | Base up to date | `git fetch && git status -sb` | Branching from a stale base produces avoidable conflicts |
 | A test command | From the Testing Specification | Gate 3 cannot be verified without one, and an unverifiable gate is a failed gate |
 
-Note whether CI runs on pull requests. If it does, it gates every merge. If it does
-not, the local suite is the *only* evidence — say so explicitly when asking for
+Note whether CI runs on pull requests, and which checks the ruleset requires —
+on the `develop` flow, the Branch Policy check is one of them. If CI runs, it gates
+every merge. If it does not, the local suite is the *only* evidence — say so explicitly when asking for
 authorization, because it materially changes what the user is agreeing to.
 
 ## 2. The authorization
@@ -42,8 +45,8 @@ What does **not** count as authorization:
 - Authorization for a *previous* batch. Each run is authorized on its own scope.
 
 Authorization covers the use cases named and the actions listed. It does not extend
-to a use case discovered later, a different base branch, or a repository the user
-did not name.
+to a use case discovered later, a different base branch, a release — cutting
+`release/*`, merging into `main`, tagging — or a repository the user did not name.
 
 ## 3. Stop conditions
 
@@ -60,7 +63,7 @@ honest halt.
 | Dangling requirement | A use case cites an `FR-<AREA>-xx` the System Requirements Document does not define | Guessing which requirement was meant builds the wrong thing correctly |
 | Missing specification | The use case has no entry in the specification | There is nothing to implement, only a name |
 | Ambiguous flow | A flow admits more than one reasonable implementation | At batch scale a wrong reading is repeated, not caught |
-| Branch protection | A required approving review, or a rule the merge would violate | The rule exists because someone wanted a human here |
+| Branch protection | A required approving review, or a rule the merge would violate — classic protection or a ruleset | The rule exists because someone wanted a human here |
 | Dirty tree between use cases | `git status --porcelain` not empty after a merge | Something was left behind; find out what before compounding it |
 
 ### The retry budget
@@ -82,6 +85,8 @@ by "no human intervention":
 - **Approving your own pull request** to satisfy a required-review rule.
 - **Disabling, skipping, filtering, or deleting a test** to make a suite green.
 - **Merging with red or unread CI.**
+- **Opening or merging a pull request into `main`**, cutting a `release/*` branch,
+  or pushing a tag. Releasing is the repository owner's step.
 - **Editing branch protection, repository settings, or CI configuration** to make
   the batch's path easier.
 - **Reverting or force-updating already-merged work** to tidy up after a stop.

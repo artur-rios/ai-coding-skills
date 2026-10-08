@@ -12,7 +12,9 @@ Substitutions:
   {{branch pattern example}}  a filled-in instance, e.g. feature/uc-01-create-order
   {{test command}}      the project's test invocation
 
-Change a rule ONLY where the source material specifies something different. Keep
+Branches are cut from `develop`, the integration branch, and pull requests target
+`develop`; `main` only receives release branches (see CONTRIBUTING.md). Change a
+rule ONLY where the source material specifies something different. Keep
 the pause gates unless the user explicitly said the agent may advance unattended.
 -->
 
@@ -52,7 +54,8 @@ for a clear go-ahead.
 ```
 Load specs → Refine (design → plan) → [approval] → Branch + issue→In Progress
   → Implement → [approval] → issue→Testing → Test until green → [approval]
-  → Open PR → [human review + merge + delete branch] → [approval] → issue→Done
+  → CHANGELOG entry + README backlog → Open PR into develop
+  → [human review + merge + delete branch] → [approval] → issue→Done
 ```
 
 Steps 1–2 and every `[approval]` gate are where the implementer stops.
@@ -97,11 +100,11 @@ code.** This is the first review gate.
 
 ## Step 3 — Branch and move the issue to In Progress
 
-Once the plan is approved, create the branch from an up-to-date main branch using
+Once the plan is approved, create the branch from an up-to-date `develop` using
 the naming pattern `{{branch pattern}}`:
 
 ```bash
-git switch main && git pull
+git switch develop && git pull
 git switch -c {{branch pattern example}}
 ```
 
@@ -133,8 +136,15 @@ Report the passing results. **Do not open a pull request yet — stop and ask.**
 
 ## Step 7 — Open the pull request (after approval)
 
-Once approved, push the branch and open a pull request into the main branch,
-referencing the issue so the merge closes it. Then **hand off to a human** for
+Once approved, record the change on the same branch, so it merges with the
+implementation:
+
+- Add an entry under `## [Unreleased]` in [CHANGELOG.md](../CHANGELOG.md),
+  describing what a user or operator would notice.
+- If the root README tracks the backlog, mark this {{unit of work}}'s row done.
+
+Then push the branch and open a pull request into `develop`, referencing the
+issue so the merge closes it. Then **hand off to a human** for
 review and merge. Do **not** merge or delete the branch.
 
 ## Step 8 — Close out (after the human merges)
@@ -146,10 +156,12 @@ then move the issue to **Done** and confirm it is closed.
 
 ## Definition of Done
 
-- [ ] Implemented on a `{{branch pattern}}` branch created from the main branch.
+- [ ] Implemented on a `{{branch pattern}}` branch created from `develop`.
 - [ ] Main flow and every alternative flow implemented.
 - [ ] Tests cover the {{unit of work}} per the Testing Specification.
 - [ ] The full suite passes.
-- [ ] The pull request was reviewed by a human and merged.
+- [ ] The change is recorded under `## [Unreleased]` in `CHANGELOG.md`, and the
+      README backlog row (if any) is marked done, in the same pull request.
+- [ ] The pull request into `develop` was reviewed by a human and merged.
 - [ ] The branch was deleted.
 - [ ] The issue is in **Done** and closed.
