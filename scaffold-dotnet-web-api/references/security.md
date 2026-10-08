@@ -24,27 +24,19 @@ public enum Roles
 Add roles the API actually needs. Two is the floor — a role that gates
 administration and a role that does not.
 
-## Security/IdentityUser.cs
+## The authenticated caller
 
-The authenticated caller as the API models it. `Id` is the caller's **public**
-identifier: internal bigint ids never leave the data layer, so a token that
-carried one would leak row counts to anyone who decoded it.
+The scaffold writes no identity class of its own. The non-generic
+`AddTokenAuthentication` (see below) attaches an `AuthenticatedUser(Guid Id, int RoleId)`
+record to the request, and `HttpContext.GetUser()` returns it as
+`IAuthenticatedUser`. `Id` is the caller's **public** identifier: internal bigint
+ids never leave the data layer, so a token that carried one would leak row counts
+to anyone who decoded it.
 
-```csharp
-using ArturRios.Util.WebApi.Security.Interfaces;
-
-namespace <Prefix>.<Name>.WebApi.Security;
-
-/// <summary>The authenticated caller, rebuilt from the token's claims on every request.</summary>
-public class IdentityUser : IAuthenticatedUser
-{
-    /// <summary>The caller's public identifier.</summary>
-    public Guid Id { get; set; }
-
-    /// <summary>The caller's role value (see <c>Roles</c>).</summary>
-    public int RoleId { get; set; }
-}
-```
+Read the caller with the **non-generic** `GetUser()`. `GetUser<TUser>()` is a plain
+`as TUser` cast, so with the default mapper `GetUser<MyIdentityUser>()` is always
+`null` — every caller would look anonymous. The generic form is only for an API
+that registers its own mapper (below) whose `FromClaims` returns that type.
 
 ## No custom claims mapper — and no token issuer
 
@@ -84,6 +76,7 @@ Core types.
 ```csharp
 using <Prefix>.<Name>.Shared.Security;
 using ArturRios.Util.WebApi.Security.Extensions;
+using ArturRios.Util.WebApi.Security.Interfaces;
 
 namespace <Prefix>.<Name>.WebApi.Security;
 
@@ -93,7 +86,7 @@ namespace <Prefix>.<Name>.WebApi.Security;
 /// </summary>
 public class HttpContextActorAccessor(IHttpContextAccessor accessor) : IActorAccessor
 {
-    private IdentityUser? Actor => accessor.HttpContext?.GetUser<IdentityUser>();
+    private IAuthenticatedUser? Actor => accessor.HttpContext?.GetUser();
 
     public Guid? ActingPersonId => Actor?.Id;
 
@@ -122,7 +115,7 @@ public static class ActorExtensions
     /// </summary>
     public static void ApplyActor(this HttpContext httpContext, IActorScoped actorScoped)
     {
-        var actor = httpContext.GetUser<IdentityUser>()!;
+        var actor = httpContext.GetUser()!;
 
         actorScoped.ActingPersonId = actor.Id;
         actorScoped.ActingRole = actor.RoleId;
@@ -134,7 +127,7 @@ public static class ActorExtensions
 
 The only controller. It is also the reference shape for every controller the
 first feature writes: thin, dispatching through a mediator, resolving the
-response through `ResponseResolver`, declaring authorization with an attribute.
+response through `ToActionResult`, declaring authorization with an attribute.
 
 ```csharp
 using <Prefix>.<Name>.Domain.Enums;
@@ -166,7 +159,7 @@ public class HealthCheckController(QueryMediator queryMediator) : Controller
             .WithData("Hello world!")
             .WithMessage("<Name> API is working.");
 
-        return ResponseResolver.Resolve(result, HttpStatusCodes.Ok);
+        return result.ToActionResult(HttpStatusCodes.Ok);
     }
 
     /// <summary>
@@ -186,7 +179,7 @@ public class HealthCheckController(QueryMediator queryMediator) : Controller
             ? HttpStatusCodes.Ok
             : HttpStatusCodes.ServiceUnavailable;
 
-        return ResponseResolver.Resolve(result, statusCode);
+        return result.ToActionResult(statusCode);
     }
 }
 ```
@@ -196,6 +189,6 @@ Two things to carry forward from it:
 - **Authorization that a role attribute can decide is declared at the door.**
   Anything data-dependent — "does this caller own that record?" — belongs in the
   handler, which is the only place that can read the data.
-- **`ResponseResolver.Resolve(result, statusMap: …)`** is the normal form once
+- **`result.ToActionResult(statusMap: …)`** is the normal form once
   an entity has a message map. The health controller passes an explicit status
   because its two outcomes are not a message-driven decision.

@@ -29,13 +29,16 @@ registration → tests — and it is the shape everything else follows.
 | `<Prefix>.<Name>.WebApi` | Controllers, security, DI registration in `Startup.AddDependencies`. |
 
 Dependencies point inwards: `Command` and `Query` know `Domain` and `Shared`;
-`Data` knows `Domain`; `WebApi` knows all four. Nothing points back.
+`Data` knows `Domain`; `WebApi` knows all four. Nothing points back. (The
+scaffold's one exception, `Query` → `Data` for `DatabaseHealthCheck`, is
+temporary: switch it to a repository and drop the reference with the first
+entity.)
 
 ## The shape of one write use case
 
 Adding "create a thing" means adding, in this order:
 
-1. `Domain/Entities/Thing.cs` — extends `Entity`, carries a `PublicId` GUID, an
+1. `Domain/Entities/Thing.cs` — extends `Entity<long>`, carries a `PublicId` GUID, an
    `IsDeleted` flag if it is soft-deletable, `CreatedAt` / `UpdatedAt`.
 2. `Data/EntityMaps/ThingDbMap.cs` — `ToTable`, key, the unique index on
    `PublicId`, defaults, and any index that holds an invariant. Register it in
@@ -77,7 +80,7 @@ Pick the envelope by what the operation returns. All three are in
 
 | Returns | Envelope |
 |---|---|
-| nothing — a delete, a toggle, a command with no payload | `ProcessOutput` |
+| nothing — a delete, a toggle, a command with no payload | `DataOutput<TOutput?>` with an empty `*CommandOutput` — the mediator's handler interfaces always return `DataOutput`; `ProcessOutput` is for code outside the mediator |
 | one resource | `DataOutput<T>` |
 | a listing | `PaginatedOutput<T>` |
 
@@ -113,14 +116,15 @@ Two things still throw, and neither is an exception to the rule:
   future one: catch only where the caught failure is the result, never where it
   is an error path.
 
-`CustomException(string[] messages)` exists for a throw that must carry
-caller-safe text to the middleware. Reaching for it in a handler means the
+`CustomException(string[] messages)` — abstract, so a throw derives its own
+exception from it — exists for a throw that must carry caller-safe text to the
+middleware. Reaching for it in a handler means the
 outcome belonged on an envelope.
 
 **Repositories, not `DbContext`, in handlers.** Depend on
-`IAsyncReadOnlyRepository<T>` for reads and `IAsyncRepository<T>` for writes, and
+`IAsyncReadOnlyRepository<T, long>` for reads and `IAsyncRepository<T, long>` for writes, and
 use `.Query()` with EF Core LINQ. This is also what makes handlers unit-testable
-with `AsyncFakeRepository<T>` (the async fake — `FakeRepository<T>` backs the
+with `AsyncFakeRepository<T, long>` (the async fake — `FakeRepository<T, long>` backs the
 synchronous interfaces).
 
 **Public ids out, internal ids in.** Inputs, outputs, and routes use `PublicId`
@@ -128,7 +132,7 @@ synchronous interfaces).
 never leaves the data layer — it leaks row counts and creation order.
 
 **Controllers are thin.** Bind input, dispatch through `CommandMediator` /
-`QueryMediator`, return `ResponseResolver.Resolve(result, statusMap: …)`. Nothing
+`QueryMediator`, return `result.ToActionResult(statusMap: …)`. Nothing
 else. Authorization a role attribute can decide is declared at the door with
 `[RoleRequirement((int)Roles.X)]` or `[AllowAnonymous]`; authorization that
 depends on data — "does this caller own that record?" — belongs in the handler,
@@ -154,7 +158,7 @@ source of the published OpenAPI document.
 
 Named `GivenSomeCondition_WhenSomeAction_ThenSomeOutcome`.
 
-- **Unit** — `[UnitFact]` / `[UnitTheory]`, `AsyncFakeRepository<T>`, Moq, Bogus.
+- **Unit** — `[UnitFact]` / `[UnitTheory]`, `AsyncFakeRepository<T, long>`, Moq, Bogus.
   One per handler branch, including every failure. Assert on the returned
   envelope — `Assert.False(output.Success)` and the expected `*Messages` const in
   `output.Errors`. A test written with `Assert.ThrowsAsync` is testing behaviour

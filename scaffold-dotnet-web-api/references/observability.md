@@ -47,7 +47,7 @@ public static class HealthStatuses
 
 With no entities yet, the round-trip goes through the context rather than a
 repository. Once the first entity exists, switch to
-`IAsyncReadOnlyRepository<T>.Query().AnyAsync()` — the same shape everything else
+`IAsyncReadOnlyRepository<T, long>.Query().AnyAsync()` — the same shape everything else
 uses — and say so in a comment here.
 
 ```csharp
@@ -75,7 +75,7 @@ public class DatabaseHealthCheck(AppDbContext context) : IServiceHealthCheck
         try
         {
             // Succeeds only if the connection is usable. Once the first entity exists, prefer
-            // IAsyncReadOnlyRepository<T>.Query().AnyAsync() — handlers depend on repositories,
+            // IAsyncReadOnlyRepository<T, long>.Query().AnyAsync() — handlers depend on repositories,
             // not on the context.
             return await context.Database.CanConnectAsync();
         }
@@ -233,8 +233,9 @@ public abstract class PaginatedQueryValidator<TQuery> : AbstractValidator<TQuery
 
 ## Serilog
 
-Configured before anything else in `Startup.Build`, so a failure during
-configuration loading is still logged. Console gets JSON so a container log
+Configured first thing in the `Startup` constructor — before `Build` runs
+`LoadConfiguration` — so a failure during configuration loading is still logged,
+and so its variables are read from the process environment, not the `.env` file. Console gets JSON so a container log
 aggregator can parse it; the file sink is partitioned by year/month via
 `Serilog.Sinks.Map` and rolls daily inside each partition.
 

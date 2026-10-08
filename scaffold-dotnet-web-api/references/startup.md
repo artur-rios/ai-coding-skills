@@ -11,9 +11,9 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        var startup = new Startup(args);
+        var app = new Startup(args).CreateApplication();
 
-        startup.BuildAndRun();
+        app.Run();
     }
 }
 ```
@@ -23,10 +23,27 @@ API with `WebApiTest<Program>`, which needs the type.
 
 ## Startup.cs
 
-`WebApiStartup` from `ArturRios.Util.WebApi` provides `Builder`, `App`,
-`LoadConfiguration`, `BuildApp`, `AddMiddlewares`, `UseSwaggerGen`,
-`UseSwagger`, `AddCustomInvalidModelStateResponse`, and the overridable hooks
-below.
+`WebApiStartup` from `ArturRios.Util.WebApi` owns the build sequence. Its
+`Build()` — not virtual, and callable once — runs, in this order:
+
+1. `LoadConfiguration`, as the command-line parameters allow:
+   `Environments/.env.<Environment>` into the process environment (falling back
+   to `.env.local`), and `Settings/appsettings.<Environment>.json` (falling back
+   to `appsettings.Local.json`).
+2. `AddControllers()`, the invalid-model-state envelope (a 400 carrying a failed
+   `DataOutput`), and the Swagger generator — registered only in the
+   environments Swagger is allowed in, `Development` and `Local` by default.
+3. The derived class's `ConfigureServices(WebApplicationBuilder)`.
+4. `Builder.Build()`, then the pipeline: `UseStandardMiddlewares(Options.CorsPolicy)`,
+   any `Options.Middlewares`, then `MapControllers()`.
+
+It returns the `WebApplication` (`Run()` / `RunAsync()` are `Build()` plus
+running it). Beyond its registrations in `ConfigureServices`, a derived class
+has three levers and no others — there is no other step to override: the
+`Action<WebApiStartupOptions>` its constructor hands to `base`,
+`Options` while `ConfigureServices` runs (that is how CORS is switched on), and
+the `WebApplication` that `Build()` returns. It also gets `Builder` and the
+parsed command-line `Parameters`.
 
 Two `using`s are easy to miss and both fail at compile time:
 `Microsoft.AspNetCore.DataProtection` (that is the namespace
@@ -35,7 +52,45 @@ Two `using`s are easy to miss and both fail at compile time:
 `JwtConfiguration` / `JwtHandler` / `JwtKey`.
 
 ```csharp
-public class Startup(string[] args) : WebApiStartup(args)
+using System.Threading.RateLimiting;
+using <Prefix>.<Name>.Data.Configuration;
+using <Prefix>.<Name>.Data.Seeding;
+using <Prefix>.<Name>.Query.Handlers;
+using <Prefix>.<Name>.Query.HealthChecks;
+using <Prefix>.<Name>.Query.Input;
+using <Prefix>.<Name>.Query.Output;
+using <Prefix>.<Name>.Shared.Security;
+using <Prefix>.<Name>.WebApi.Binding;
+using <Prefix>.<Name>.WebApi.Documentation;
+using <Prefix>.<Name>.WebApi.Security;
+using ArturRios.Data.PostgreSql;
+using ArturRios.Data.Relational.Core.DependencyInjection;
+using ArturRios.Jwt;
+using ArturRios.Mediator.Command;
+using ArturRios.Mediator.Query;
+using ArturRios.Mediator.Query.Interfaces;
+using ArturRios.Util.WebApi.Configuration;
+using ArturRios.Util.WebApi.Security.Enums;
+using ArturRios.Util.WebApi.Security.Extensions;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.RateLimiting;
+using Serilog;
+using Serilog.Formatting.Json;
+
+namespace <Prefix>.<Name>.WebApi;
+
+/// <summary>
+///     Builds the API on Util.WebApi's standard sequence: configuration, controllers, the
+///     invalid-model-state envelope and Swagger, then <see cref="ConfigureServices" />, then the
+///     standard pipeline and the controllers.
+/// </summary>
+/// <remarks>
+///     What the standard pipeline has no slot for goes around it: the developer exception page and
+///     HTTPS redirection ahead of it, through <see cref="EdgePipeline" />; rate limiting after it, in
+///     <see cref="CreateApplication" />. Call <see cref="CreateApplication" />, not <c>Build</c>, to
+///     get a complete API.
+/// </remarks>
+public class Startup : WebApiStartup
 {
     private const string LogDirectoryEnvironmentVariable = "<NAME>_LOG_DIRECTORY";
     private const string DefaultLogDirectory = "logs";
@@ -48,6 +103,7 @@ public class Startup(string[] args) : WebApiStartup(args)
     private const double DefaultTokenExpirationInSeconds = 3600;
 
     private const string CorsAllowedOriginsEnvironmentVariable = "<NAME>_CORS_ALLOWED_ORIGINS";
+    private const string CorsPolicyName = "<Name>FrontEnds";
 
     /// <summary>
     ///     Rate-limiting policy name applied with <c>[EnableRateLimiting(AnonymousEndpointRateLimitPolicy)]</c>
@@ -55,67 +111,172 @@ public class Startup(string[] args) : WebApiStartup(args)
     ///     configuration stay in sync without duplicating the literal.
     /// </summary>
     public const string AnonymousEndpointRateLimitPolicy = "Anonymous";
-```
 
-### Build — the order is the contract
-
-```csharp
-    public override void Build()
+    public Startup(string[] args) : base(args, ConfigureStandardSequence)
     {
-        ConfigureLogging();                    // see references/observability.md
+        // Before anything else, so every later step has somewhere to log. LoadConfiguration has not
+        // run yet — Build runs it — which is why ConfigureLogging reads its settings straight from
+        // the process environment (see references/observability.md).
+        ConfigureLogging();
         Builder.Host.UseSerilog();
 
         Log.Information("Building web api on {Environment} environment", Builder.Environment.EnvironmentName);
+    }
+```
 
-        LoadConfiguration();
-        ConfigureWebApi();
-        AddDependencies();
-        ConfigureSecurity();
+### The standard sequence's options
 
-        AddCustomInvalidModelStateResponse();
-        UseSwaggerGen(jwtAuthentication: true);
+```csharp
+    /// <summary>
+    ///     Tunes the parts of the standard sequence this API does not take as they come.
+    /// </summary>
+    private static void ConfigureStandardSequence(WebApiStartupOptions options)
+    {
+        // Swagger is described by SwaggerConfiguration alone — the same method the OpenApiGen tool
+        // applies to produce docs/openapi/<name>.json, so the published page and the running API's are
+        // one document. Swagger.JwtAuthentication is deliberately left false: SwaggerConfiguration
+        // defines the "Bearer" scheme itself, and the library's own definition, added after this
+        // callback with AddSecurityDefinition, throws on the duplicate key — and since the Swagger
+        // middleware resolves the generator on every request, every request then answers 500
+        // wherever Swagger is registered.
+        options.Swagger.ConfigureGenerator = SwaggerConfiguration.Configure;
 
-        // Layered over the SwaggerGen the call above registers, so Swagger UI shows the controllers'
-        // own summaries and marks which endpoints need a token. The same method produces
-        // docs/openapi/<name>.json, which is what keeps the published page and this one identical.
-        Builder.Services.ConfigureSwaggerGen(SwaggerConfiguration.Configure);
+        // Both are the library's defaults, set here all the same because they are a decision about
+        // personal data rather than a technicality: every request's log entry carries the client IP
+        // address, and the request's activity is tagged with it as client.address. Turn them off here,
+        // not by accident.
+        options.TraceActivity.LogClientIp = true;
+        options.TraceActivity.TagClientAddress = true;
+    }
+```
 
-        BuildApp();
-        ConfigureApp();
+### CreateApplication — what `Build` has no slot for
 
-        // ExceptionMiddleware is the codebase's only exception handler: nothing in the request path
-        // catches, so a bug or a broken dependency reaches here, gets logged with its stack trace,
-        // and is written as the same JSON envelope every other failure uses. Business outcomes never
-        // arrive as exceptions -- those are errors on a returned ProcessOutput / DataOutput<T> /
-        // PaginatedOutput<T>, which ResponseResolver maps to a status.
-        //
-        // The two middlewares are registered around UseSwagger rather than before it, and the order
-        // is the whole point.
-        //
-        // ExceptionMiddleware stays first, so a failure inside Swagger still answers the same JSON
-        // envelope as every other error rather than a bare 500. AuthenticationMiddleware goes after,
-        // because it does not exempt the Swagger routes: registered ahead of them it answers 401 to
-        // every request for /swagger, index.html included, which no browser can satisfy — it has no
-        // way to send a bearer token for a document request, so the UI is unreachable.
-        //
-        // This does not expose the document in production: Util.WebApi registers Swagger only in the
-        // environments it allows, and in Production it registers nothing at all — the generator is
-        // what publishes the document for readers who are not running the API.
-        AddMiddlewares([typeof(ExceptionMiddleware)]);
-        UseSwagger();
-        AddMiddlewares([typeof(AuthenticationMiddleware)]);
+```csharp
+    /// <summary>
+    ///     Builds the API and completes it: <c>Build</c>'s standard sequence, then rate limiting, then
+    ///     the database seed — so nothing is served before the schema is known to be current.
+    /// </summary>
+    public WebApplication CreateApplication()
+    {
+        var app = Build();
 
-        StartServices();
+        // After the standard pipeline, because it has no slot for it. Rate limiting still sees the
+        // endpoint — WebApplication routes ahead of every middleware it is given — and still runs
+        // before MVC: the endpoint itself is always the last step, however late this is added. The
+        // rate-limited endpoints are anonymous, so AuthenticationMiddleware passes them through to
+        // this point rather than spending anything on them first.
+        app.UseRateLimiter();
+
+        SeedDatabase(app);
 
         Log.Information("Ready to run!");
+
+        return app;
+    }
+```
+
+### The pipeline — the order is the library's
+
+Nothing in `Startup` arranges middleware by hand. The order is fixed by
+Util.WebApi's `UseStandardMiddlewares`, and the two additions sit outside it:
+
+| # | Step | Added by |
+|---|---|---|
+| 1 | Developer exception page (`Local` / `Development` only), forwarded headers, HTTPS redirection | `EdgePipeline`, an `IStartupFilter` — it wraps the whole pipeline, so it runs first |
+| 2 | Routing — the endpoint is selected here, so everything below can read its metadata | `WebApplication`, implicitly |
+| 3 | Forwarded headers — a no-op until `ForwardedHeadersOptions` names a trusted proxy | `UseStandardMiddlewares` |
+| 4 | `TraceActivityMiddleware` — the request's activity and its log entry | `UseStandardMiddlewares` |
+| 5 | `ExceptionMiddleware` | `UseStandardMiddlewares` |
+| 6 | Swagger JSON and UI — only where the generator was registered, never in Production | `UseStandardMiddlewares` |
+| 7 | CORS, with the policy named in `Options.CorsPolicy` — absent when none is named | `UseStandardMiddlewares` |
+| 8 | `AuthenticationMiddleware` — present only because `AddTokenAuthentication` registered its options | `UseStandardMiddlewares` |
+| 9 | Rate limiter | `CreateApplication` |
+| 10 | Controllers, with `[RoleRequirement]` as an MVC authorization filter | `Build` (`MapControllers`) |
+
+What the order buys, and why none of it needs hand-placing any more:
+
+- **`ExceptionMiddleware` is the codebase's only exception handler.** Nothing in
+  the request path catches, so a bug or a broken dependency reaches it, gets
+  logged with its stack trace, and is written as the same JSON envelope every
+  other failure uses. Business outcomes never arrive as exceptions — those are
+  errors on a returned `ProcessOutput` / `DataOutput<T>` / `PaginatedOutput<T>`,
+  which `ToActionResult` maps to a status. It sits ahead of Swagger, CORS and
+  authentication, so a failure in any of them still answers the envelope rather
+  than a bare 500.
+- **Swagger and CORS come before authentication.** `AuthenticationMiddleware`
+  also exempts the Swagger routes itself (when Swagger is registered) and every
+  endpoint marked `[AllowAnonymous]`, so the UI loads in a browser that has no
+  way to send a bearer token, and a CORS preflight is answered without one.
+- **No ASP.NET Core authentication or authorization middleware.** Nothing here
+  reads `HttpContext.User` or carries ASP.NET Core's `[Authorize]`; the
+  controllers use the library's attributes, which read the user
+  `AuthenticationMiddleware` attaches. `AddAuthentication`, `UseAuthentication`
+  and `UseAuthorization` would be a second, unused authentication stack.
+- **Swagger is not exposed in production.** Util.WebApi registers the generator
+  only in the environments it allows, and in Production it registers nothing at
+  all — the OpenApiGen tool is what publishes the document for readers who are
+  not running the API.
+
+### ConfigureServices
+
+Runs after `LoadConfiguration`, so every `Environment.GetEnvironmentVariable`
+below already sees the `.env` file's values.
+
+```csharp
+    protected override void ConfigureServices(WebApplicationBuilder builder)
+    {
+        ConfigureWebApi();
+        AddDependencies();
+
+        builder.Services.AddSingleton<IStartupFilter>(new EdgePipeline(builder.Environment));
+
+        ConfigureSecurity();
+        ConfigureCors();
+    }
+```
+
+### EdgePipeline
+
+```csharp
+    /// <summary>
+    ///     The middlewares that must run ahead of the standard pipeline. A startup filter is how they
+    ///     get there: ASP.NET Core wraps the application's whole pipeline in it, so what it adds runs
+    ///     before anything <c>Build</c> adds.
+    /// </summary>
+    private sealed class EdgePipeline(IWebHostEnvironment environment) : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+        {
+            // Local is included alongside Development because it is what a developer machine runs:
+            // the configuration loader resolves Environments/.env.<environment>, so the launch
+            // profiles name Local to reach .env.local. Testing IsDevelopment() alone would silently
+            // cost the developer exception page in the one environment that exists to have it.
+            if (environment.IsDevelopment() || environment.IsEnvironment("Local"))
+            {
+                app.UseDeveloperExceptionPage();
+            }
+
+            // Ahead of HTTPS redirection, which decides on the scheme: behind a TLS-terminating proxy
+            // every request arrives as http, and only X-Forwarded-Proto says the caller used https.
+            // A no-op until ForwardedHeadersOptions names the trusted proxy; the standard pipeline runs
+            // it again later, which then changes nothing.
+            app.UseForwardedHeaders();
+
+            app.UseHttpsRedirection();
+
+            next(app);
+        };
     }
 ```
 
 ### ConfigureWebApi
 
 ```csharp
-    public override void ConfigureWebApi()
+    private void ConfigureWebApi()
     {
+        // The standard sequence has already called AddControllers(); calling it again adds this
+        // configuration to the same MVC registration.
         Builder.Services.AddControllers(options =>
         {
             // Also applied by tools/<Prefix>.<Name>.OpenApiGen, which builds its own
@@ -141,7 +302,7 @@ validator, command handler, and query handler here **explicitly** — no assembl
 scanning: it hides a missing validator until runtime.
 
 ```csharp
-    public override void AddDependencies()
+    private void AddDependencies()
     {
         // EF diagnostics expose parameter and column values — password hashes, salts, e-mails — so
         // they stay off in production.
@@ -187,39 +348,19 @@ scanning: it hides a missing validator until runtime.
     }
 ```
 
-### ConfigureApp
-
-```csharp
-    public override void ConfigureApp()
-    {
-        ConfigureCors();
-
-        // Local is included alongside Development because it is what a developer machine runs: the
-        // configuration loader resolves Environments/.env.<environment>, so the launch profiles name
-        // Local to reach .env.local. Testing IsDevelopment() alone would silently cost the developer
-        // exception page in the one environment that exists to have it.
-        if (Builder.Environment.IsDevelopment() || Builder.Environment.IsEnvironment("Local"))
-        {
-            App.UseDeveloperExceptionPage();
-        }
-
-        App.UseHttpsRedirection();
-        App.UseRouting();
-        App.UseRateLimiter();
-        App.UseAuthentication();
-        App.UseAuthorization();
-        App.MapControllers();
-    }
-```
-
 ### ConfigureCors
 
 Refusing by default is deliberate. A missing entry costs a browser front end its
 access until an operator adds one — visible and quickly fixed. Defaulting to
 "any origin" leaves a deployment wide open with nothing to indicate it.
 
+The policy is **registered** here and **applied** by the standard pipeline, which
+names it in `UseCors` ahead of `AuthenticationMiddleware`, so a preflight request
+is answered without a token. With no origins configured no policy is named, and
+the pipeline adds no CORS middleware at all.
+
 ```csharp
-    public override void ConfigureCors()
+    private void ConfigureCors()
     {
         var origins = (Environment.GetEnvironmentVariable(CorsAllowedOriginsEnvironmentVariable) ?? string.Empty)
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -234,25 +375,36 @@ access until an operator adds one — visible and quickly fixed. Defaulting to
             return;
         }
 
+        Log.Information("Allowing cross-origin requests from {Origins}", origins);
+
         // Credentials are allowed because a front end sends the bearer token the API issued. That is
         // also why the origin list has to be explicit: AllowAnyOrigin and AllowCredentials are
         // mutually exclusive by specification, precisely to stop this combination from existing.
-        App.UseCors(policy => policy
+        Builder.Services.AddCors(cors => cors.AddPolicy(CorsPolicyName, policy => policy
             .WithOrigins(origins)
             .AllowAnyMethod()
             .AllowAnyHeader()
-            .AllowCredentials());
+            .AllowCredentials()));
+
+        Options.CorsPolicy = CorsPolicyName;
     }
 ```
 
 ### ConfigureSecurity
 
-```csharp
-    public override void ConfigureSecurity()
-    {
-        Builder.Services.AddAuthentication("Jwt").AddJwtBearer("Jwt");
-        Builder.Services.AddAuthorization();
+`AddTokenAuthentication` is also what puts `AuthenticationMiddleware` in the
+pipeline — `UseStandardMiddlewares` adds it only when the options this call
+registers are in the container. Leave it out and nothing fails at startup:
+endpoints without `[RoleRequirement]` are simply open.
 
+```csharp
+    private void ConfigureSecurity()
+    {
+        // Authentication is Util.WebApi's alone: ASP.NET Core's authentication and authorization
+        // services and middlewares are not registered, because nothing here reads HttpContext.User or
+        // carries ASP.NET Core's [Authorize] — the controllers use the library's attributes, which read
+        // the user AuthenticationMiddleware attaches.
+        //
         // AuthenticationMiddleware resolves AuthenticationOptions and the token validators from the
         // container; JwtTokenValidator additionally needs JwtConfiguration, JwtHandler, and a claims
         // mapper. The non-generic overload registers DefaultAuthenticatedUserMapper, which maps Id
@@ -367,16 +519,16 @@ access until an operator adds one — visible and quickly fixed. Defaulting to
     }
 ```
 
-### StartServices
+### SeedDatabase
 
 ```csharp
     /// <summary>
     ///     Runs the database seeder before the host starts serving. Migrations are not applied
     ///     here — the seeder throws if any are pending.
     /// </summary>
-    public override void StartServices()
+    private static void SeedDatabase(WebApplication app)
     {
-        using var scope = App.Services.CreateScope();
+        using var scope = app.Services.CreateScope();
 
         scope.ServiceProvider.GetRequiredService<DatabaseSeeder>().SeedAsync().GetAwaiter().GetResult();
     }
@@ -432,17 +584,22 @@ public class ServerPopulatedBindingMetadataProvider : IBindingMetadataProvider
 ## Documentation/SwaggerConfiguration.cs
 
 One `public static void Configure(SwaggerGenOptions options)`, applied in two
-places — `Startup` and the generator — so the published document and the running
+places — `Startup` hands it to Util.WebApi as `Options.Swagger.ConfigureGenerator`,
+and the generator calls it directly — so the published document and the running
 API cannot describe the same endpoint differently. The parts that are not
 obvious, and that a shorter version gets wrong:
 
 1. `options.SwaggerDoc("v1", new OpenApiInfo { … })` with the API's title and
    description.
-2. **Assign** the Bearer scheme rather than `AddSecurityDefinition`, which throws
-   on a duplicate key: `UseSwaggerGen(jwtAuthentication: true)` has already
-   defined `"Bearer"` when this runs inside the API, and has not when the
-   generator runs it. `options.SwaggerGeneratorOptions.SecuritySchemes["Bearer"] = …`
-   is the one call that works in both places.
+2. **This method owns the `"Bearer"` scheme**, in both places. `Startup` leaves
+   `Options.Swagger.JwtAuthentication` false, because the library's JWT scheme is
+   added after `ConfigureGenerator` runs, with `AddSecurityDefinition` — which
+   throws on a duplicate key. Turning both on does not fail startup; it fails
+   every request with a 500 in `Local` and `Development`, because the Swagger
+   middleware resolves the generator on every request. **Assign** the scheme
+   rather than adding it all the same —
+   `options.SwaggerGeneratorOptions.SecuritySchemes["Bearer"] = …` — so this
+   method itself never throws, whatever defined `"Bearer"` before it ran.
 3. `options.IncludeXmlComments(path)` — and **throw** if the XML file is absent,
    naming `<GenerateDocumentationFile>`. A missing file silently produces a page
    with no descriptions, which is the whole reason the page is worth reading.
@@ -604,9 +761,16 @@ compares bytes.
 }
 ```
 
-`appsettings.Local.json`, `appsettings.Development.json`, and
-`appsettings.Production.json` are written alongside it with the same shape;
-`.gitignore` excludes the first two so a developer's overrides stay local.
+This is the only settings file the scaffold writes, and the only one committed.
+The configuration loader reads `Settings/appsettings.<Environment>.json`, falling
+back to `appsettings.Local.json` — never `appsettings.json` by that name, so
+this file is the shape to copy rather than a baseline anything layers over. The
+per-environment files are local: the copied `.gitignore` excludes
+`appsettings.Local.json`, `.Development.json`, `.Staging.json` and
+`.Production.json`, so a developer or a deployment writes its own and none is
+scaffolded — a file written into an ignored path is one the first commit
+silently leaves behind. Nothing the scaffold needs lives in them: its
+configuration is the environment (below).
 
 ## Environments/.env.example
 
@@ -614,7 +778,9 @@ Everything the API reads from the environment when it runs from source. Copy to
 `.env.local` (gitignored) and fill in.
 
 ```bash
-<NAME>_DATA_CONNECTIONSTRING=Host=localhost;Port=5432;Database=<name>;Username=;Password=;Search Path=<name>
+# Search Path stays public. The entities still live in the <name> schema (AppDbContext's default
+# schema); naming that schema here fails on a fresh database with 3F000 — see references/docker.md.
+<NAME>_DATA_CONNECTIONSTRING=Host=localhost;Port=5432;Database=<name>;Username=;Password=;Search Path=public
 <NAME>_DATA_DATABASETYPE=PostgreSql
 
 # Required. The API refuses to start without it.
