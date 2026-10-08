@@ -33,8 +33,9 @@ writes, but other projects nest the same pair under `docs/`. Search by file name
 rather than assuming a path:
 
 ```bash
-find . -name "Development Workflow Document.md" -o -name "Workflow.md" \
-       -o -name "Use Case Specification Document.md" -not -path "*/node_modules/*"
+find . \( -name node_modules -o -name .git \) -prune -o \
+       \( -name "Development Workflow Document.md" -o -name "Workflow.md" \
+          -o -name "Use Case Specification Document.md" \) -print
 ```
 
 If the repository uses different file names for the same documents, match on
@@ -78,6 +79,44 @@ user needs to know:
 > `Workflow.md` says `uc/##-name`. Which is right? I'll follow your answer and you
 > may want to fix the other document."
 
+### The enforced branching model governs the base branch
+
+The workflow documents describe the process; the repository may also **enforce** a
+branching model, and an enforced rule outranks a written one — a pull request the
+Branch Policy check rejects cannot merge, however faithfully it followed the
+document. Look for it before reading a base branch out of the documents:
+
+| Signal | Where |
+| --- | --- |
+| A branching section | `CONTRIBUTING.md` — "Branching model", "Branches", "Branching and pull requests" |
+| A branch policy workflow | `.github/workflows/branch-policy.yml` — the prefixes it accepts into each base |
+| An integration branch | `git ls-remote --heads origin develop` |
+| Rulesets | `gh api repos/{owner}/{repo}/rulesets`, and `gh api repos/{owner}/{repo}/rules/branches/develop` for what applies to it |
+
+The common model: `develop` is the integration branch; work branches are cut from
+an up-to-date `develop` as `feature/<name>` (a use case is `feature/uc-##-name`, or
+whatever pattern the documents give) or `fix/<name>` for a fix, and their pull
+requests target `develop`. `main` accepts only `release/<version>` pull requests,
+which the repository owner cuts and merges. **A use case pull request never targets
+`main`.**
+
+When the model is enforced:
+
+- **It sets the base branch and the accepted prefixes.** The documents still own
+  the rest of the pattern — the `uc-##-name` part, the statuses, the gates.
+- **A workflow document that disagrees with it is stale** — typically a Development
+  Workflow Document still saying "branch from `main`" after the repository moved to
+  `develop`. Follow the enforced model, and report the stale passage at the first
+  stop for the user (Gate 1, or the batch authorization) with the file and section.
+  Do not pick silently, and do not fix the document inside the use case's pull
+  request — that is a separate change.
+- **A branch pattern the policy would reject is a contradiction to raise**, not one
+  to resolve: a document asking for `uc/##-name` in a repository that accepts only
+  `feature/` and `fix/` into `develop` needs the user's answer.
+
+When the repository enforces nothing — no branching section, no branch policy, no
+`develop`, no rulesets — the base branch the documents name stands.
+
 ## 4. Extract the project's parameters
 
 Pull these from the documents rather than assuming them. Record what you found and
@@ -87,7 +126,8 @@ where, so the user can correct a misreading before any work starts.
 | --- | --- |
 | Unit-of-work name and ID prefix (`UC`, ticket, story) | Development Workflow §Purpose, Use Case Specification |
 | Branch naming pattern | Development Workflow §Step 1 |
-| Base branch | Development Workflow §Step 1 |
+| Base branch | Development Workflow §Step 1 — overridden by the enforced branching model, see §3 |
+| Enforced branching model | `CONTRIBUTING.md`, `.github/workflows/branch-policy.yml`, the remote's branches and rulesets — see §3 |
 | Status lifecycle and its column names | Development Workflow §Issue status lifecycle |
 | Which transition may be made unattended | `Workflow.md` §The golden rule |
 | Issue tracker and how issues are located | Development Workflow, `Workflow.md` |
@@ -95,13 +135,14 @@ where, so the user can correct a misreading before any work starts.
 | Definition of Done checklist | Development Workflow §Definition of Done |
 | Pull request target and description convention | Development Workflow §Step 6 |
 | Whether the backlog is mirrored in the root `README.md`, and how it marks done | The repository's `README.md` — see [readme-tracking.md](readme-tracking.md) §1 |
+| Whether a `CHANGELOG.md` with a `## [Unreleased]` section exists, and its phrasing | The repository's `CHANGELOG.md` and `CONTRIBUTING.md` — see [changelog-entry.md](changelog-entry.md) §1 |
 
 **If a parameter is undefined in the documents, ask.** A branch pattern nobody
 wrote down is not a branch pattern you get to choose.
 
-The README check is the one exception to "read it from the documents": the README
-is not a workflow document, and its absence of tracking is an answer, not a gap to
-ask about.
+The README and CHANGELOG checks are the exceptions to "read it from the
+documents": neither file is a workflow document, and the absence of tracking or of
+a changelog is an answer, not a gap to ask about.
 
 ## 5. Load the use case specifications
 

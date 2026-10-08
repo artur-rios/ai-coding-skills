@@ -1,10 +1,11 @@
 # generate-specs-from-brainstorm
 
-Expands a human-written `Brainstorm.md` into **twelve structured project
+Expands a human-written `Brainstorm.md` into **fourteen structured project
 documents** and a **starting GitHub backlog** — an informal `initial/` set you read
 to understand the project in ten minutes, a formal `requirements/` set an
-implementer (human or agent) builds from, and a root README that tracks the
-milestones and issues derived from the use cases.
+implementer (human or agent) builds from, a root README that tracks the milestones
+and issues derived from the use cases, and the `CHANGELOG.md` and `CONTRIBUTING.md`
+beside it.
 
 ## What it does
 
@@ -18,7 +19,9 @@ milestones and issues derived from the use cases.
   feed the formal documents — and writes `requirements/` (seven documents).
 - Derives a backlog from the use cases: one issue per `UC-xx`, plus one foundation
   issue for the project scaffold and initial infrastructure, grouped into logical
-  milestones, plus a README that tracks them.
+  milestones, plus a README that tracks them, a `CHANGELOG.md` with an empty
+  `## [Unreleased]`, and a `CONTRIBUTING.md` with the build, test, branching,
+  versioning and release instructions.
 - **Stops again** before creating anything on GitHub, then creates the milestones,
   the foundation issue, and the use-case issues, and fills the README with their
   real numbers.
@@ -47,6 +50,8 @@ ends up inside `initial/` beside the documents it produced:
 ```
 <project-root>/
 ├── README.md
+├── CHANGELOG.md
+├── CONTRIBUTING.md
 ├── initial/
 │   ├── Brainstorm.md
 │   ├── Project Overview.md
@@ -73,8 +78,23 @@ formal requirements later.
 **`requirements/`** is formal — numbered sections, identifier schemes, traceability
 tables, and mermaid diagrams (context, ER, state, and flow).
 
-**`README.md`** is the entry point: overview, an index of every specification
-document, installation and test instructions, and the roadmap and backlog tables.
+**`README.md`** is the entry point for someone who uses or operates the project:
+overview, an index of every specification document, installation (install,
+configure, run), the roadmap and backlog tables, and short **Changelog** and
+**Contributing** sections linking the other two root files. It carries no
+contributor content.
+
+**`CHANGELOG.md`** follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/),
+states that the project adheres to Semantic Versioning, and starts with an empty
+`## [Unreleased]`.
+
+**`CONTRIBUTING.md`** holds what a contributor needs: prerequisites, build, the
+test commands from the Testing Specification, the branching model (`feature/` and
+`fix/` branches from and into `develop`; `release/x.y.z` snapshots of `develop`
+into `main`, merged with a merge commit and tagged `vx.y.z`), Conventional Commits
+and the rule to record every noticeable change under `## [Unreleased]` in the same
+pull request, versioning (SemVer, with what major / minor / patch mean for this
+kind of project and where the version lives), and releasing.
 
 ## The backlog
 
@@ -102,6 +122,12 @@ They are complementary, not duplicates:
 The formal document **formalizes** the approved `initial/Workflow.md`. Where the
 two could disagree, the version you approved wins.
 
+Both default to the `develop` flow: each unit of work is branched from `develop`,
+records its change under `## [Unreleased]` in `CHANGELOG.md` and marks its README
+backlog row done on the same branch, and is merged into `develop` through a
+reviewed pull request. Releases — `release/x.y.z` into `main` — are described in
+`CONTRIBUTING.md`, which the Development Workflow Document links.
+
 ## Identifier schemes
 
 | Identifier | Meaning | Defined in |
@@ -121,7 +147,8 @@ than shifting everything below it.
 ## How it works
 
 1. **Locate** the brainstorm and derive the project root. Stop and ask if
-   `initial/`, `requirements/`, or a root README already has content.
+   `initial/`, `requirements/`, or a root README, CHANGELOG or CONTRIBUTING
+   already has content.
 2. **Inventory Phase 1 gaps** against the per-document checklists.
 3. **Ask** everything missing, in one batch.
 4. **Write `initial/`** — three inline outlines plus the `Workflow.md` template.
@@ -135,11 +162,15 @@ than shifting everything below it.
 10. **Verify** traceability, links, leftover scaffolding, and workflow consistency.
 11. **Derive** the issues — one per use case plus the foundation issue — and group
     them into milestones.
-12. **Write the README**, with the roadmap and backlog as a plan.
+12. **Write the README, CHANGELOG and CONTRIBUTING**, with the roadmap and
+    backlog as a plan.
 13. **Stop for approval** before anything is created on GitHub.
 14. **Create** the milestones and issues, then fill the README with real numbers.
-15. **Verify and report** the files, the backlog, any defaults applied, and any
-    deferred decisions.
+15. **Verify and report** the files, the backlog, any defaults applied, any
+    deferred decisions, and the repository set-up CONTRIBUTING describes but the
+    skill does not perform — creating `develop` and making it the default branch,
+    a Branch Policy workflow, and the *Develop: PRs only*, *Main: release PRs only*
+    and *Version tags* rulesets.
 
 ## What it refuses to guess
 
@@ -148,7 +179,8 @@ report so you can correct it: the project name, the two-letter requirement area
 codes, and which entities appear in a diagram.
 
 Everything else — the database, the auth model, the deployment target, a library
-version, the install and test commands in the README — is a question. When you
+version, the install, build and test commands in the README and CONTRIBUTING —
+is a question. When you
 don't know a version yet, it records `latest stable at implementation time` rather
 than inventing a number.
 
@@ -161,6 +193,8 @@ than inventing a number.
 | `references/gap-questions.md` | Per-document checklists of required inputs, and the questions to ask when they're missing. |
 | `references/github-backlog.md` | How use cases become issues, how issues group into milestones, the `gh` commands, and the README tracking format. |
 | `templates/README.md` | Skeleton for the project README, roadmap, and backlog. |
+| `templates/CHANGELOG.md` | Skeleton for the Keep a Changelog file with an empty `## [Unreleased]`. |
+| `templates/CONTRIBUTING.md` | Skeleton for prerequisites, build, tests, branching, commits and the changelog, versioning, and releasing. |
 | `templates/Workflow.md` | Skeleton for the agent-facing delivery workflow. |
 | `templates/Vision Document.md` | Skeleton for the Vision Document. |
 | `templates/System Requirements Document.md` | Skeleton for functional/non-functional requirements, data model, and traceability. |
@@ -172,7 +206,7 @@ than inventing a number.
 
 ## What you get back
 
-Twelve documents, a GitHub backlog of milestones and issues, a list of the defaults
+Fourteen documents, a GitHub backlog of milestones and issues, a list of the defaults
 applied, the decisions explicitly deferred, and the verification results — with
 review gates where your edits actually change what gets generated next, and before
 anything is created outside your working tree.

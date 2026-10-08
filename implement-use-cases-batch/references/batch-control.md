@@ -68,8 +68,10 @@ if any of it fails:
 
 ### c. Branch and mark started
 
-Create the branch from an **up-to-date** base branch, using the project's pattern.
-Move the issue to the project's "work started" status.
+Create the branch from an **up-to-date** base branch, using the project's pattern —
+on the `develop` flow, `git switch develop && git pull`, then
+`git switch -c feature/uc-##-use-case-name`. Move the issue to the project's "work
+started" status.
 
 ### d. Implement
 
@@ -93,20 +95,29 @@ fix, re-run — within the retry budget in `autonomy-protocol.md` §3.
 - [ ] The run was the full suite — not filtered, not a subset.
 - [ ] Every test passes. Zero skipped tests that this use case should have covered.
 
-### h. README tracking, then the pull request
+### h. README tracking and CHANGELOG entry, then the pull request
 
-If the repository's README carries a backlog, mark this use case's row done **on
-this branch**, so the status change merges with the implementation. Then push and
-open the pull request, referencing the issue so the merge closes it.
+On **this branch**, so both changes merge with the implementation:
+
+- If the repository's README carries a backlog, mark this use case's row done, per
+  [readme-tracking.md](readme-tracking.md).
+- If `CHANGELOG.md` exists, add this use case's entry under `## [Unreleased]`, per
+  [changelog-entry.md](changelog-entry.md). If it does not exist, do not create
+  one — the batch report says so.
+
+Then push and open the pull request into the base branch — `develop` on the
+`develop` flow, never `main` — referencing the issue so the merge closes it.
 
 ### i. Merge
 
-1. Wait for CI. Poll until the required checks conclude — do not merge on pending.
-2. **Green** → merge using the repository's configured method, then delete the
-   branch.
+1. Wait for CI. Poll until the required checks conclude — the tests and the Branch
+   Policy check — and do not merge on pending.
+2. **Green** → merge with a method the base branch's ruleset allows (`merge` or
+   `squash` on `develop`), then delete the branch.
 3. **Red, or the merge conflicts** → stop the batch.
 
-Never `--admin`, never force, never self-approve.
+Never `--admin`, never force, never self-approve. Never open or merge a pull request
+into `main`: releasing is the repository owner's step, per `CONTRIBUTING.md`.
 
 ### j. Definition of Done
 
@@ -114,10 +125,17 @@ Walk the checklist from the project's Development Workflow Document and confirm 
 item against evidence. A failed item stops the batch — the use case is not done, and
 the next one would build on it.
 
+The items that name the human's review and merge — "reviewed by a human and
+merged", "a human merged the pull request" — are the ones the batch authorization
+replaced. They hold when the pull request merged into the base branch with every
+required check green, and the report lists them as *merged under the batch
+authorization*, never as a review that happened. Every other item must hold as
+written.
+
 ### k. Sync and continue
 
-Return to the base branch, pull, and confirm the working tree is clean. Then start
-the next use case.
+Return to the base branch (`develop` on the `develop` flow), pull, and confirm the
+working tree is clean. Then start the next use case.
 
 ## 3. Progress reporting
 

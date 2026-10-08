@@ -1,26 +1,36 @@
 <!--
 GUIDANCE — delete this comment block in the generated file.
 
-The project README, written at the repository root. It is the entry point: what
-the project is, where its specifications live, how to install and test it, and
-what the planned work is.
+The project README, written at the repository root. It is the entry point for
+someone who will use or operate the project: what it is, where its
+specifications live, how to install and run it, and what the planned work is.
 
-The project has no code yet. Installation and testing commands are therefore the
+The README holds consumer and operator content only. Building from source,
+running the tests, the branching model and the release process belong in
+CONTRIBUTING.md (templates/CONTRIBUTING.md), and the release history in
+CHANGELOG.md (templates/CHANGELOG.md) — the README ends with two short sections
+pointing at them. The Roadmap and Backlog tables stay here.
+
+The project has no code yet. Installation commands are therefore the
 **intended** commands implied by the approved Technology Stack Document and
-Testing Specification Document (`dotnet restore`, `npm install`, `pytest`, …).
-Take them from those documents. If the stack does not determine a command, ask —
-never invent one, and never write a command you could not justify from a document.
+Operations & Infrastructure Document (`dotnet restore`, `npm install`, a
+`docker compose` invocation, …). Take them from those documents. If the stack
+does not determine a command, ask — never invent one, and never write a command
+you could not justify from a document.
 
 Substitutions:
   {{Project Name}}        e.g. Acme Ordering API
   {{one-paragraph description}}   from initial/Project Overview.md §What This Is
   {{capability}}          core capabilities, from §What It Does
   {{non-goal}}            from §What It Doesn't Do
-  {{prerequisite}}        runtime/SDK and version, from the Technology Stack Document
+  {{prerequisite}}        what an operator needs installed to run it, from the
+                          Technology Stack Document
+  {{repo}}                the repository's directory name — the last segment of
+                          its URL, not the project name, which may contain spaces
   {{install command}}     from the Technology Stack Document
+  {{configure step}}      how configuration is supplied, from the Operations &
+                          Infrastructure Document — omit if it defines none
   {{run command}}         how the application is started, if the documents define it
-  {{test command}}        from the Testing Specification Document
-  {{test category}}       unit / integration / functional, per the Testing Specification
 
 Omit the Roadmap and Backlog rows' links until the issues exist; see
 references/github-backlog.md §4.
@@ -67,23 +77,13 @@ Prerequisites: {{prerequisite}}
 
 ```bash
 git clone <repository-url>
-cd {{Project Name}}
+cd {{repo}}
 {{install command}}
 ```
 
+{{configure step — include only if the documents define how configuration is supplied}}
+
 {{run command block — include only if the documents define how the application is started}}
-
-## Testing
-
-{{test command}} runs the suite described in the
-[Testing Specification Document](requirements/Testing%20Specification%20Document.md):
-
-```bash
-{{test command}}
-```
-
-The suite covers {{test category}} tests. Every unit of work is expected to ship
-with tests before its pull request is opened.
 
 ## Roadmap
 
@@ -96,9 +96,11 @@ with tests before its pull request is opened.
 
 <!-- One H3 per milestone, in the same order as the Roadmap table. -->
 
+## Changelog
+
+Notable changes in each release are recorded in [CHANGELOG.md](./CHANGELOG.md).
+
 ## Contributing
 
-One unit of work = one branch = one issue = one pull request. The full process —
-branch naming, issue status lifecycle, the testing gate, and the Definition of
-Done — is in the
-[Development Workflow Document](requirements/Development%20Workflow%20Document.md).
+Building from source, running the tests, the delivery workflow, the branching model and the release
+process are described in [CONTRIBUTING.md](./CONTRIBUTING.md).

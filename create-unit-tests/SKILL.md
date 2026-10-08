@@ -116,6 +116,13 @@ Create a todo per step.
 - If no test project/dir exists, create one following the ecosystem's convention
   (e.g. `<Project>.Tests` beside `src/`). Match the project's assertion library and
   mocking tool rather than introducing new ones.
+- **Find how the suites are separated.** Many .NET repositories mark every test
+  class with a category — `[Trait("Category", "Unit")]` / `"Functional"`, or a
+  helper attribute such as `[UnitFact]` — and CI runs
+  `dotnet test --filter "Category=Unit"` and `"Category=Functional"` as separate
+  jobs. Check the existing test classes, `CONTRIBUTING.md` and
+  `.github/workflows/`. If the project categorizes, the new tests carry the same
+  marker; a test without it is never run by any CI job.
 
 ### 2. Read the code under test — do not guess its behavior
 
@@ -144,6 +151,8 @@ reviewable before implementation.
 
 - One behavior per test; **Arrange-Act-Assert** body under a Given-When-Then name.
 - Group tests per unit (one test class/`describe` per class/module under test).
+- Carry the project's category marker on every new test class (step 1) —
+  `[Trait("Category", "Unit")]` for these tests in a repository that filters by it.
 - Use data-driven tests (`[Theory]`/`it.each`/`@pytest.mark.parametrize`) for
   families of similar inputs, but keep the Given-When-Then name meaningful.
 - Mock only external collaborators; never mock the unit under test.
@@ -174,6 +183,7 @@ Tell the user:
 |---|---|
 | Test naming | Given-When-Then, unless the project documents its own convention — that wins. |
 | Framework | The project's existing one. Never introduce a second. |
+| Category marker | The project's own (`[Trait("Category", "Unit")]`, `[UnitFact]`, …) on every new test class, when the project categorizes. |
 | Scenario list | Written before the first test, not discovered while writing. |
 | Assertions per test | One observable outcome. Two means two tests. |
 | Mocks | External collaborators only, never the unit under test. |
@@ -201,13 +211,14 @@ A complete, runnable example is in
 [references/example-xunit.md](references/example-xunit.md). Shape:
 
 ```csharp
+[Trait("Category", "Unit")]                                 // when the project filters by category
 public class CartServiceTests
 {
     [Fact]
     public void GivenEmptyCart_WhenCheckoutIsCalled_ThenThrowsInvalidOperation()
     {
         var cart = new Cart();                              // Arrange
-        var sut  = new CartService(cart);
+        var sut  = new CartService(cart, Mock.Of<IPaymentGateway>());
 
         var act = () => sut.Checkout();                     // Act
 
@@ -219,7 +230,7 @@ public class CartServiceTests
     [InlineData(0)]
     public void GivenNonPositiveQuantity_WhenAddItem_ThenThrowsArgumentOutOfRange(int qty)
     {
-        var sut = new CartService(new Cart());
+        var sut = new CartService(new Cart(), Mock.Of<IPaymentGateway>());
 
         var act = () => sut.AddItem("sku-1", qty);
 
@@ -244,3 +255,6 @@ public class CartServiceTests
   don't make the test agree with buggy output.
 - **Mocking the unit under test** or introducing a new test framework instead of
   matching the project's existing one.
+- **Leaving out the category marker** in a repository whose CI runs
+  `--filter "Category=Unit"`. The tests pass locally with a plain `dotnet test`
+  and are silently skipped by every CI job.

@@ -1,4 +1,6 @@
-# Scripts, OpenAPI, CI, docs site, API client, README
+# Scripts, OpenAPI, CI, docs site, API client
+
+The README, CHANGELOG and CONTRIBUTING are in `repo-docs.md`.
 
 ## scripts/
 
@@ -138,11 +140,12 @@ Outside the solution, so a solution-wide `dotnet test` never builds it.
 
 ### tests.yml
 
-On `push` to `main` and on `pull_request`. **No path filters** — a test suite is
-the one workflow that should run for every change; a filter lets a change to an
-unlisted path merge without evidence that anything still passes.
+On `push` to `develop` and `main`, and on `pull_request` into `develop` and
+`main`. **No path filters** — a test suite is the one workflow that should run for
+every change; a filter lets a change to an unlisted path merge without evidence
+that anything still passes.
 
-One job, in this order, so the cheapest signal arrives first:
+One job, `test`, in this order, so the cheapest signal arrives first:
 
 1. `python3 -m unittest discover -s scripts -p "test_*.py"` — milliseconds, no build.
 2. `dotnet restore src/<Prefix>.<Name>.sln`
@@ -159,12 +162,16 @@ One job, in this order, so the cheapest signal arrives first:
    both with `if: always()` — a coverage failure is exactly the run whose report
    somebody needs to open.
 
-A second job builds the container image (`push: false`). Nothing else in CI does,
+A second job, `docker`, builds the container image (`push: false`). Nothing else in CI does,
 and the Dockerfile restores from a hand-listed set of project files rather than
 the whole tree — so a new file restore depends on is missing from the build
 context and fails there while every other job stays green.
 
 Set `concurrency: { group: tests-${{ github.ref }}, cancel-in-progress: true }`.
+
+Leave both jobs without a `name:`. Their ids, `test` and `docker`, are then the
+check names the rulesets require (see SKILL.md step 10) — renaming a job silently
+un-requires it.
 
 ### check-openapi.yml
 
@@ -172,12 +179,42 @@ Runs `python3 scripts/openapi.py --check` and fails when the committed document
 is stale. Without it a controller change keeps being published with the old
 document, because the docs site only rebuilds on changes under `docs/`.
 
+On `push` to `develop` and `main` and on `pull_request`, both filtered to the
+paths that can change the document: `src/**`, the generator under `tools/`,
+`scripts/openapi.py`, `docs/openapi/**` and the workflow itself. Because of the
+path filter it is not a required check — a required check that does not run
+blocks the merge forever.
+
+### branch-policy.yml
+
+Copied verbatim from `files/.github/workflows/branch-policy.yml`. On every pull
+request into `develop` or `main` it enforces the branching model the generated
+`CONTRIBUTING.md` describes: into `develop` only from `feature/<name>`,
+`fix/<name>` or `dependabot/…`, and only from a branch cut from `develop`; into
+`main` only from `release/<major>.<minor>.<patch>`, which must be a snapshot of
+`develop` and whose `v` tag must not exist yet. Its job is named
+`branch-policy`, which is the check name the rulesets require. Change nothing in
+it — it has no project-specific values.
+
 ### build-docs.yml
 
-On pushes to `main` that touch `docs/`. Checks out with
-`submodules: recursive` (the Docsy theme), `npm install --prefix docs/themes/docsy`,
-downloads the `coverage-report` artifact from the latest successful `tests` run
-on `main` into `docs/coverage-report`, runs Hugo, and deploys to GitHub Pages.
+On pushes to `main` that touch `docs/**`, `CHANGELOG.md`, `CONTRIBUTING.md` or
+the workflow itself — the site renders the two root files, so a change to either
+must rebuild it — plus `workflow_run` on **Tests** completing on `main`, because a
+change under `src/` moves the coverage numbers without touching `docs/`. Only a
+successful Tests run triggered by a `push` continues; check
+`github.event.workflow_run.event == 'push'` too, or a pull request opened from a
+branch named `main` could deploy the site.
+
+The `build` job checks out with `submodules: recursive` (the Docsy theme) and
+`fetch-depth: 0` (`enableGitInfo`), runs `npm install` in `docs/themes/docsy`,
+sets up Hugo Extended, runs `actions/configure-pages` for the base URL, downloads
+the `coverage-report` artifact from the latest successful `tests.yml` run pushed
+to `main` into `docs/coverage-report` (failing rather than publishing without
+it), builds with Hugo and uploads `docs/public` with
+`actions/upload-pages-artifact`. A separate `deploy` job publishes it with
+`actions/deploy-pages` — Pages source "GitHub Actions", no `gh-pages` branch.
+Permissions: `contents: read`, `pages: write`, `id-token: write`, `actions: read`.
 **Renaming the artifact breaks this job** — say so in a comment in both files.
 
 ## docs/ — the Hugo site
@@ -188,13 +225,59 @@ Docsy as a git submodule at `docs/themes/docsy`:
 git submodule add https://github.com/google/docsy.git docs/themes/docsy
 ```
 
-`docs/hugo.toml` sets `baseURL` to `https://<owner>.github.io/<repo>/`, the
-theme, and mounts `docs/coverage-report` at `static/coverage-report`. Content
-pages under `docs/content/en/docs/`: `overview`, `getting-started`,
-`architecture`, `api-explorer` (Swagger UI over `docs/openapi/<name>.json`),
-`operations`, `testing`. Each starts as a short page saying what belongs there —
-a stub with a heading is honest; a stub that reads as finished documentation is
-not.
+Docsy ships the theme in a `theme/` subdirectory of its repository (v0.16.0+),
+so `hugo.toml` sets `theme = 'docsy/theme'`, not `'docsy'`.
+
+`docs/hugo.toml` sets `baseURL` to `https://<owner>.github.io/<repo>/`,
+`contentDir = 'content/en'`, `github_repo = 'https://github.com/<owner>/<repo>'`,
+`github_branch = 'main'` and `github_subdir = 'docs'` under `[params]`, and the
+`[module]` mounts below. **Declaring any mount replaces Hugo's defaults**, so
+every directory the site relies on is mounted explicitly — the content, the
+project stylesheet under `assets/`, the coverage report and the OpenAPI
+document — before the two root files:
+
+```toml
+[module]
+[[module.mounts]]
+source = 'content/en'
+target = 'content'
+[[module.mounts]]
+source = 'coverage-report'
+target = 'static/coverage-report'
+[[module.mounts]]
+source = 'openapi'
+target = 'static/openapi'
+[[module.mounts]]
+source = 'assets'
+target = 'assets'
+# CHANGELOG.md and CONTRIBUTING.md live at the repository root; the site renders them
+# (see layouts/_shortcodes/repo-file.html) instead of keeping copies.
+[[module.mounts]]
+source = '../CHANGELOG.md'
+target = 'assets/repo/CHANGELOG.md'
+[[module.mounts]]
+source = '../CONTRIBUTING.md'
+target = 'assets/repo/CONTRIBUTING.md'
+```
+
+Content pages under `docs/content/en/docs/`: `overview`, `getting-started`
+(configure and run — operator content, the same ground as the README),
+`architecture`, `api-explorer` (Swagger UI over `docs/openapi/<name>.json`) and
+`operations`. Each starts as a short page saying what belongs there — a stub with
+a heading is honest; a stub that reads as finished documentation is not.
+
+**The site never repeats what `CONTRIBUTING.md` or `CHANGELOG.md` holds** — no
+testing page, no branching or release page, no release history. Instead, copying
+`files/` to the repository root adds:
+
+- `docs/layouts/_shortcodes/repo-file.html` — renders a mounted root file, drops
+  its H1 (the page has a title) and points its `./relative` links at the file on
+  GitHub, using `github_repo` and `github_branch`;
+- `docs/content/en/docs/changelog/_index.md` and `contributing/_index.md` — one
+  `{{< repo-file "…" >}}` call each, weighted 900 and 1000 so they sit last in
+  the sidebar.
+
+Keep the other pages' weights below 900.
 
 `docs/openapi/` gets a `.gitkeep`; the document appears the first time
 `scripts/openapi.py` runs.
@@ -210,28 +293,3 @@ health endpoints and nothing else.
   and a `Health/` folder with one `.bru` per endpoint. Bruno reads real values
   from `bruno/.env`, which is gitignored.
 - `api-client/README.md` explaining both and where the credential overlays go.
-
-## README.md
-
-Sections, in order:
-
-1. Title, a docs-site badge and a license badge.
-2. A link to the documentation site.
-3. One paragraph: what the API is, built with ASP.NET Core (.NET 10).
-4. **Overview** — bullets for the architecture and the cross-cutting features.
-5. **Project structure** — the annotated tree from `references/layout.md`.
-6. **Getting started** — prerequisites (.NET 10 SDK, PostgreSQL, Docker for the
-   functional suite, Python 3 for the scripts), copying `Environments/.env.example`
-   to `.env.local`, setting the token secret and master-user variables, running
-   `python scripts/migrations.py` once entities exist, and `dotnet run`.
-7. **Testing** — the two filters, and that the functional suite needs Docker.
-8. **Deploy with Docker** — the three `docker compose --env-file …` commands.
-9. **Documentation** — the site, and how to preview it locally.
-10. **Conventions** — a pointer to `docs/conventions.md`, described as the thing
-    to read before adding a feature.
-11. **License**.
-
-State plainly in *Getting started* that the project ships with **no domain
-entities** — the only migration is the one creating the Data Protection key ring
-— and that the first feature adds both an entity and its migration. A reader who
-does not know that will assume the scaffold is broken.

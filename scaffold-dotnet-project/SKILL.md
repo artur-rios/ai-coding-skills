@@ -1,6 +1,6 @@
 ---
 name: scaffold-dotnet-project
-description: Use when the user wants to create or scaffold a new .NET project or solution from scratch in an empty or greenfield directory — running `dotnet new` with the right template, picking folder structure (DDD or basic), and creating docs/src/tests layout with README and LICENSE. Triggers on "scaffold a .NET project", "create a new dotnet solution", "bootstrap a .NET project", "start a new C# project". Not for adding a project to an existing solution: it stops if the directory already contains a `.sln` or `.csproj`, and asks before overwriting any file it would write. Not for a layered DDD + CQRS web API in the heimdall style — that is scaffold-dotnet-web-api.
+description: Use when the user wants to create or scaffold a new .NET project or solution from scratch in an empty or greenfield directory — running `dotnet new` with the right template, picking folder structure (DDD or basic), and creating docs/src/tests layout with a consumer-facing README, CHANGELOG.md, CONTRIBUTING.md, LICENSE and the develop/release branch policy workflow. Triggers on "scaffold a .NET project", "create a new dotnet solution", "bootstrap a .NET project", "start a new C# project". Not for adding a project to an existing solution — it stops if the directory already contains a `.sln` or `.csproj`, and asks before overwriting any file it would write. Not for a layered DDD + CQRS web API in the heimdall style — that is scaffold-dotnet-web-api.
 ---
 
 # Scaffold .NET Project
@@ -14,6 +14,11 @@ flow. Asks the user everything needed **before** any file is created, then runs
 **Core principle:** collect every answer first, then scaffold in one shot —
 never mix questions with file creation. If you `dotnet new` before all answers
 are collected, you must delete the output and start over.
+
+Alongside the code it writes the repository's three root documents — a README for
+the people who use the project, a `CHANGELOG.md` and a `CONTRIBUTING.md` for the
+people who build it — and the `branch-policy.yml` workflow that enforces the
+`develop` / `release/<version>` / `main` branching model.
 
 **This skill scaffolds exactly two `dotnet new` projects in DDD mode** (the
 WebApi presentation project and the Domain class library) and one project in
@@ -68,6 +73,8 @@ Skip / adapt if:
 | "I should set up a proper multi-project DDD solution with all layers" | The user can add those later. This skill bootstraps the starting point with Domain + WebApi. |
 | ".slnx is the modern default, .sln is legacy" | `--format sln` ensures tooling compatibility. The user asked for .sln. |
 | "I know what questions to ask without reading the procedure" | The procedure specifies exact question ordering and wording. Follow it. |
+| "The README is the obvious place for `dotnet build` / `dotnet test`" | Build, test, branching and release instructions are contributor material. They go in `CONTRIBUTING.md`; the README links it. |
+| "A new repo doesn't need a CHANGELOG yet" | The first pull request already has something to record under `## [Unreleased]`. Starting the file later means reconstructing what it missed. |
 
 ## Procedure
 
@@ -75,13 +82,14 @@ Create a todo per step. **Collect every answer before touching `dotnet new`.**
 
 ### 0. Check the directory is safe to scaffold into
 
-This skill writes `README.md`, `LICENSE`, `.editorconfig`, `.gitignore`, and
-`.wakatime-project` at the repo root. **Overwriting any of them loses the user's
+This skill writes `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`,
+`.editorconfig`, `.gitignore`, `.wakatime-project` and
+`.github/workflows/branch-policy.yml`. **Overwriting any of them loses the user's
 work**, so look before asking anything:
 
 ```bash
 ls -a
-find . -name "*.sln" -o -name "*.slnx" -o -name "*.csproj" -not -path "./.git/*"
+find . -path ./.git -prune -o \( -name "*.sln" -o -name "*.slnx" -o -name "*.csproj" \) -print
 ```
 
 - **A solution or project already exists** → this is not a greenfield directory.
@@ -115,13 +123,8 @@ is what they intended, then use it.
 | `mvc` | ASP.NET Core MVC web app |
 | `web` | ASP.NET Core Empty |
 | `webapp` / `razor` | ASP.NET Core Razor Pages |
-| `blazor` | Blazor Web App (server + WASM) |
-| `blazorserver` | Blazor Server |
-| `blazorserver-empty` | Blazor Server (empty) |
-| `blazorwasm` | Blazor WebAssembly standalone |
-| `blazorwasm-empty` | Blazor WebAssembly (empty) |
-| `angular` | ASP.NET Core with Angular |
-| `react` | ASP.NET Core with React.js |
+| `blazor` | Blazor Web App — `--interactivity Server` for a server-rendered app, `WebAssembly` or `Auto` otherwise; `--empty` omits the sample pages |
+| `blazorwasm` | Blazor WebAssembly standalone (`--empty` omits the sample pages) |
 | `classlib` | Class library |
 | `grpc` | ASP.NET Core gRPC service |
 | `worker` | Worker Service (background) |
@@ -131,6 +134,12 @@ is what they intended, then use it.
 | `xunit` | xUnit test project |
 | `nunit` | NUnit test project |
 | `mstest` | MSTest test project |
+
+The table matches the .NET 10 SDK. Before running, confirm the short name exists
+with `dotnet new list <short name>` — the SDK no longer ships `blazorserver`,
+`blazorserver-empty`, `blazorwasm-empty`, `angular` or `react`. Map a request for
+one of those to `blazor` / `blazorwasm` with the options above, or, for an Angular
+or React front end, say there is no SDK template and ask how to proceed.
 
 ### 2. Project name
 
@@ -179,7 +188,10 @@ src/
       <Prefix.>ProjectName.WebApi.csproj   ← the WebApi dotnet new project
   <Prefix.>SolutionName.sln
 tests/                ← empty directory
+.github/workflows/branch-policy.yml
 README.md
+CHANGELOG.md
+CONTRIBUTING.md
 LICENSE
 ```
 
@@ -217,7 +229,10 @@ src/
     <Prefix.>ProjectName.csproj   ← the ONLY dotnet new project
   <Prefix.>SolutionName.sln
 tests/                 ← empty directory
+.github/workflows/branch-policy.yml
 README.md
+CHANGELOG.md
+CONTRIBUTING.md
 LICENSE
 ```
 
@@ -249,6 +264,12 @@ Ask: *"Which license? Options: MIT, AGPL, or Custom Commercial."*
   
   Then write a `LICENSE` file from the answers.
 
+### 6b. GitHub repository — only when there is no git remote
+
+Run `git remote get-url origin`. If it answers, take the owner and repository name
+from it and skip this question. Otherwise ask: *"Which GitHub owner/repo will this
+live in? (e.g. acme/order-service)"* — the CHANGELOG's links need it.
+
 ### 7. Scaffold — execute in this exact order
 
 1. Create `docs/` and `tests/` directories at the repo root.
@@ -269,10 +290,48 @@ Ask: *"Which license? Options: MIT, AGPL, or Custom Commercial."*
    root: `.editorconfig`, `.gitignore`, and `.wakatime-project`. These files are
    always included in every scaffolded project — subject to the overwrite answers
    from step 0.
-8. Write `README.md` with project name, description, build instructions
-   (`dotnet build`, `dotnet test`), and license reference.
-9. Write `LICENSE` per the user's choice.
-10. Run `dotnet build src/<Prefix.>SolutionName.sln` to verify the scaffold builds.
+8. Write `README.md` for the project's users, in this order: `# <Prefix.>ProjectName`,
+   the one-paragraph description from step 1, `## Requirements` (the .NET version the
+   projects target), then the two closing pointer sections and the license:
+
+   ```markdown
+   ## Changelog
+
+   Notable changes in each release are recorded in [CHANGELOG.md](./CHANGELOG.md). Releases follow
+   [Semantic Versioning](https://semver.org/).
+
+   ## Contributing
+
+   Building from source, running the tests, the branching model and the release process are described in
+   [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+   ## Legal Details
+
+   This project is licensed under the <license>. A copy of the license is available at [LICENSE](./LICENSE) in the repository.
+   ```
+
+   **No build, test, branching or release instructions in the README** — they go in
+   `CONTRIBUTING.md`. If the project will ship as a NuGet package, the README is
+   packed into it and those two links must be absolute
+   (`https://github.com/<owner>/<repo>/blob/main/CHANGELOG.md`); say so in the report
+   and point at `generate-nuget-lib-docs`.
+9. Write `CHANGELOG.md` from `templates/CHANGELOG.md` and `CONTRIBUTING.md` from
+   `templates/CONTRIBUTING.md`, deleting the guidance comments. Pick the variant by
+   the project template:
+
+   | Template | Variant | Branch policy |
+   |---|---|---|
+   | `classlib` | **Library** — version in the csproj, release branch carries the bump and the CHANGELOG finalization, `main` merged back into `develop` | `templates/branch-policy-library.yml`, with `__CSPROJ_PATH__` set to the project's csproj |
+   | anything else | **Application** — version is the release branch name and its `v` tag, release branches are snapshots of `develop`, CHANGELOG finalized on `develop` first | `templates/branch-policy-app.yml`, verbatim |
+
+   Fill `{{owner}}`/`{{repo}}` from step 6b. For the **library** variant, also add
+   `<Version>0.1.0</Version>` (or the starting version the user names) to the
+   `<PropertyGroup>` of the csproj `__CSPROJ_PATH__` points at: `dotnet new classlib`
+   writes no `<Version>`, and both the CONTRIBUTING text ("the version is the
+   `<Version>` in …") and the branch policy's release check read it.
+10. Write the chosen branch policy to `.github/workflows/branch-policy.yml`.
+11. Write `LICENSE` per the user's choice.
+12. Run `dotnet build src/<Prefix.>SolutionName.sln` to verify the scaffold builds.
 
 Directory creation is shell-specific — `mkdir -p src/Application` in bash,
 `New-Item -ItemType Directory -Force src/Application` in PowerShell. Use whichever
@@ -285,6 +344,17 @@ Tell the user:
 - The folder structure created.
 - The license chosen.
 - That `dotnet build` succeeded (or any issues found).
+- Which CONTRIBUTING / branch-policy variant was used, and why.
+- The remote setup the branching model needs, which this skill does not do — after
+  the first commit is pushed to `main`:
+  1. create `develop` from `main` and make it the default branch;
+  2. create the rulesets "Develop: PRs only" (on `develop`: no deletion, no force
+     push, pull request with 0 approvals, merge or squash) and "Main: release PRs
+     only" (on `main`: the same, merge commits only), both requiring the branch
+     policy check — `Branch policy` for the library variant, `branch-policy` for the
+     application variant — plus any test job a CI workflow adds later;
+  3. create the "Version tags" tag ruleset (creation, update, deletion), with the
+     repository admin role allowed to bypass all three.
 
 ## Quick Reference
 
@@ -296,6 +366,13 @@ Tell the user:
 | Prefix | "Should the solution and projects use a company/org prefix?" |
 | DDD structure | "Do you want a Domain-Driven Design folder structure?" |
 | License | "Which license? MIT, AGPL, or Custom Commercial." |
+| GitHub owner/repo | Only when there is no git remote — the CHANGELOG link needs it. |
+
+| Decision | Rule |
+|---|---|
+| What goes in the README | What the project is, its requirements, links to CHANGELOG / CONTRIBUTING, license. Nothing a contributor needs. |
+| CONTRIBUTING / branch-policy variant | `classlib` → library; any other template → application. |
+| CHANGELOG | Keep a Changelog 1.1.0, SemVer, `## [Unreleased]` linked to `commits/develop`. |
 
 ## Common Mistakes
 
@@ -319,6 +396,15 @@ Tell the user:
   to catch mismatched SDK versions or template issues.
 - **Guessing the prefix.** Leave it empty unless the user provides one; never
   invent a placeholder like `Company` or `MyOrg`.
+- **Writing build and test instructions into the README.** They are contributor
+  material and belong in `CONTRIBUTING.md`; the README ends with short Changelog
+  and Contributing sections that link the files.
+- **Picking the wrong branch-policy variant.** The library variant validates the
+  csproj `<Version>` on release branches; the application variant refuses any
+  commit on a release branch. Mixing a variant with the other's CONTRIBUTING text
+  documents a release process the check rejects.
+- **Leaving `__CSPROJ_PATH__` in the library branch policy.** Every release pull
+  request then fails its version check.
 - **Forgetting to copy reference files.** Always copy `.editorconfig`,
   `.gitignore`, and `.wakatime-project` from `references/` into the scaffolded
   project root.

@@ -1,20 +1,20 @@
 ---
 name: generate-specs-from-brainstorm
-description: Use when the user has a Brainstorm.md (or similar free-form idea notes) for a software project and wants it expanded into structured project documentation and a starting backlog — an `initial/` folder (Brainstorm, Project Overview, Technology Stack, Workflow, Business Rules), a formal `requirements/` folder (Vision, System Requirements, Use Case Specification, Development Workflow, Operations & Infrastructure, Technology Stack, Testing Specification), then a root README and GitHub milestones and issues derived from the use cases. Triggers on "turn my brainstorm into docs", "generate specs from Brainstorm.md", "create the requirements documents for this project", "expand these notes into a vision and requirements doc", "break the specs into milestones and issues". Not for README/docs-site generation of an existing codebase — that is generate-nuget-lib-docs.
+description: Use when the user has a Brainstorm.md (or similar free-form idea notes) for a software project and wants it expanded into structured project documentation and a starting backlog — an `initial/` folder (Brainstorm, Project Overview, Technology Stack, Workflow, Business Rules), a formal `requirements/` folder (Vision, System Requirements, Use Case Specification, Development Workflow, Operations & Infrastructure, Technology Stack, Testing Specification), then a root README, CHANGELOG and CONTRIBUTING and GitHub milestones and issues derived from the use cases. Triggers on "turn my brainstorm into docs", "generate specs from Brainstorm.md", "create the requirements documents for this project", "expand these notes into a vision and requirements doc", "break the specs into milestones and issues". Not for README/docs-site generation of an existing codebase — that is generate-nuget-lib-docs.
 ---
 
 # Generate Specs from Brainstorm
 
 ## Overview
 
-Expands a human-written `Brainstorm.md` into twelve structured documents and a
+Expands a human-written `Brainstorm.md` into fourteen structured documents and a
 GitHub backlog, in three phases with a review gate before each hand-off.
 
 | Phase | Produces |
 |---|---|
 | 1 | `initial/` — four informal documents, with `Brainstorm.md` moved in beside them |
 | 2 | `requirements/` — seven formal documents |
-| 3 | root `README.md`, plus GitHub milestones and one issue per unit of work |
+| 3 | root `README.md`, `CHANGELOG.md` and `CONTRIBUTING.md`, plus GitHub milestones and one issue per unit of work |
 
 **Core principle:** the brainstorm is the only source of truth about intent.
 Where it is silent, **ask** — never invent a requirement, a version number, or a
@@ -51,7 +51,7 @@ Skip / adapt if:
 - "The brainstorm doesn't say which database, I'll assume PostgreSQL" → NO. Ask.
 - "I'll write `TBD` and let them fill it in" → NO. A gap is a question asked
   before writing, not a marker shipped in the output.
-- "I'll generate all twelve documents now and let them review at the end" → NO.
+- "I'll generate all fourteen documents now and let them review at the end" → NO.
   Phase 1 stops at four documents and waits.
 - "The plan looks right, I'll just create the issues" → NO. Creating issues and
   milestones on GitHub is an outward-facing action. Present the plan, get a clear
@@ -66,6 +66,11 @@ Skip / adapt if:
   record "latest stable at implementation time".
 - "The use case list is obvious, I'll skip the traceability table" → NO. An `FR`
   no use case exercises is a defect the verification pass must catch.
+- "The README should say how to run the tests" → NO. The README is for people
+  who use or operate the project. Build, test, branching and release instructions
+  go in `CONTRIBUTING.md`; the README links to it.
+- "Use case PRs go into `main`, it's a new repository" → NO. Work is branched from
+  and merged into `develop`; `main` only receives `release/x.y.z` branches.
 
 | Rationalization | Reality |
 |---|---|
@@ -73,7 +78,7 @@ Skip / adapt if:
 | "A reasonable default is basically the same as an answer" | Only three things may be defaulted (see `references/gap-questions.md`), and each must be reported. |
 | "The templates are just suggestions" | The templates are the format the user asked for. Follow the section structure; adapt content, not skeleton. |
 | "Phase 2 can reuse what I generated in Phase 1 from memory" | The review gate exists so the user can correct Phase 1. Reading from memory discards their corrections. |
-| "This project is simple, it doesn't need twelve documents" | The user asked for twelve. Scale each document's depth to the project; do not drop documents. |
+| "This project is simple, it doesn't need fourteen documents" | The user asked for fourteen. Scale each document's depth to the project; do not drop documents. |
 | "One milestone per use case keeps it granular" | A milestone is a deliverable slice, not a ticket. Group logically — 3–7 milestones for a typical project. |
 
 ## Procedure
@@ -92,11 +97,14 @@ parent. Everything is written relative to that root:
 ```
 <project-root>/
 ├── README.md          ← Phase 3
+├── CHANGELOG.md       ← Phase 3
+├── CONTRIBUTING.md    ← Phase 3
 ├── initial/           ← Phase 1, and where Brainstorm.md ends up
 └── requirements/      ← Phase 2
 ```
 
-If either folder, or a root `README.md`, already exists with content, stop and ask
+If either folder, or a root `README.md`, `CHANGELOG.md` or `CONTRIBUTING.md`,
+already exists with content, stop and ask
 whether to overwrite, merge, or write elsewhere. Do not silently overwrite prior
 work.
 
@@ -304,14 +312,21 @@ Derive, in this order:
 
 Nothing is created on GitHub in this step.
 
-### 12. Phase 3 — write the README
+### 12. Phase 3 — write the README, CHANGELOG and CONTRIBUTING
 
-Fill [templates/README.md](templates/README.md) at the project root: overview and
-non-goals from `initial/Project Overview.md`, the specification index, installation
-and testing from the Technology Stack and Testing Specification documents, and the
-roadmap and backlog tables from step 11.
+Three files at the project root, each with its own audience:
 
-The project has no code yet, so the installation and test commands are the
+| File | Template | Holds |
+|---|---|---|
+| `README.md` | [templates/README.md](templates/README.md) | Consumer and operator content: overview and non-goals from `initial/Project Overview.md`, the specification index, installation (install, configure, run) from the Technology Stack and Operations & Infrastructure documents, the roadmap and backlog tables from step 11, and short **Changelog** and **Contributing** sections linking the other two files. |
+| `CHANGELOG.md` | [templates/CHANGELOG.md](templates/CHANGELOG.md) | Keep a Changelog 1.1.0 with the Semantic Versioning statement, and an empty `## [Unreleased]` — nothing has been released yet. |
+| `CONTRIBUTING.md` | [templates/CONTRIBUTING.md](templates/CONTRIBUTING.md) | Contributor content: prerequisites, build, tests (from the Testing Specification), the `develop` / `release/x.y.z` / `main` branching model, Conventional Commits and the changelog rule, versioning (SemVer and what major / minor / patch mean for this kind of project, and where the version lives), and releasing. |
+
+Nothing contributor-facing goes in the README, and nothing in CONTRIBUTING repeats
+the Development Workflow Document — it links to it for the per-unit-of-work
+process.
+
+The project has no code yet, so the installation, build and test commands are the
 **intended** ones the stack determines. Take them from the documents; ask when the
 documents do not determine them. Never write a command you cannot justify.
 
@@ -358,12 +373,18 @@ Check the Phase 3 output too:
 - [ ] Every issue belongs to exactly one milestone.
 - [ ] No milestone depends on a later one, and every milestone after `M-01`
       depends on it.
-- [ ] Every README link resolves, including into `initial/` and `requirements/`.
-- [ ] The README carries no `{{token}}` and no guidance comment.
+- [ ] Every README and CONTRIBUTING link resolves, including into `initial/` and
+      `requirements/`.
+- [ ] README, CHANGELOG and CONTRIBUTING carry no `{{token}}` and no guidance
+      comment.
+- [ ] The README has no build, test, branching or release instructions — those
+      are in CONTRIBUTING — and ends with the Changelog and Contributing sections.
+- [ ] CONTRIBUTING, the Development Workflow Document and `initial/Workflow.md`
+      agree on the base branch (`develop`) and the pull request target.
 - [ ] The README's issue numbers match what GitHub actually returned.
 
 Then tell the user:
-- The twelve files written and where, and that `Brainstorm.md` moved into
+- The fourteen files written and where, and that `Brainstorm.md` moved into
   `initial/`.
 - The milestones and issues created — or why they were not.
 - Which defaults you applied without asking (project name, area codes, diagram
@@ -371,6 +392,14 @@ Then tell the user:
 - Anything recorded as an explicit deferred decision (unpinned versions,
   undecided deployment target).
 - The verification results.
+- The repository set-up CONTRIBUTING describes and this skill does not perform,
+  as recommended follow-ups: create `develop` from `main` and make it the default
+  branch; add a Branch Policy workflow (`.github/workflows/branch-policy.yml`)
+  that admits only `feature/` and `fix/` branches into `develop` and only
+  `release/x.y.z` into `main`; and create the rulesets *Develop: PRs only*,
+  *Main: release PRs only* and *Version tags*, requiring the Branch Policy check
+  and whatever CI checks the foundation issue introduces. This skill writes no
+  workflow files — do not claim a check exists that nobody has written yet.
 
 ## Quick Reference
 
@@ -378,7 +407,7 @@ Then tell the user:
 |---|---|---|
 | 1 | `initial/` — Project Overview, Technology Stack, Workflow, Business Rules, and `Brainstorm.md` moved in | Stop for human review |
 | 2 | `requirements/` — Technology Stack, Vision, System Requirements, Use Case Specification, Development Workflow, Testing Specification, Operations & Infrastructure | Verify the traceability |
-| 3 | Root `README.md`, GitHub milestones, one issue per `UC-xx` plus one foundation issue | Approve the plan before anything is created on GitHub |
+| 3 | Root `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, GitHub milestones, one issue per `UC-xx` plus one foundation issue | Approve the plan before anything is created on GitHub |
 
 | Identifier | Meaning | Defined in |
 |---|---|---|
@@ -396,7 +425,7 @@ Then tell the user:
 - **Inventing an answer the brainstorm didn't give.** The single most damaging
   failure. Ask instead.
 - **Shipping `TBD` markers.** Gaps are questions asked before writing.
-- **Skipping the Phase 1 gate.** Generating all twelve documents in one pass
+- **Skipping the Phase 1 gate.** Generating all fourteen documents in one pass
   propagates every early misreading into seven formal documents.
 - **Creating GitHub issues before the plan is approved.** The backlog is
   presented in the README first; creation needs an explicit yes.
@@ -405,9 +434,15 @@ Then tell the user:
   give the use-case issues somewhere to land.
 - **Copying `Brainstorm.md` into `initial/` instead of moving it.** Two copies
   drift apart. Move it — with `git mv` when it is tracked.
-- **Writing a README install or test command from habit.** `npm install` in a
+- **Writing an install, build or test command from habit.** `npm install` in a
   .NET project is the kind of error a reader hits in the first minute. Take the
   command from the Technology Stack and Testing Specification documents.
+- **Putting contributor content in the README.** Testing, building from source,
+  branching and releasing belong in `CONTRIBUTING.md`; the README keeps the
+  overview, installation, roadmap and backlog, and links the other two files.
+- **Pointing the workflow at `main`.** Units of work branch from and merge into
+  `develop`; `main` only takes release branches. A Development Workflow Document
+  that says otherwise contradicts CONTRIBUTING from day one.
 - **Milestones that are categories, not slices.** "Backend", "Frontend" and
   "Testing" are not deliverables; "Order management" is.
 - **Reading Phase 1 output from memory instead of disk.** Discards the user's

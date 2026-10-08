@@ -8,7 +8,7 @@ the lower-cased schema/image name.
 
 ```
 .config/dotnet-tools.json
-.github/workflows/{tests,check-openapi,build-docs}.yml
+.github/workflows/{tests,check-openapi,build-docs,branch-policy}.yml
 api-client/
   http/{healthcheck.http,http-client.env.json}
   bruno/{bruno.json,collection.bru,environments/Local.bru,Health/*.bru}
@@ -19,11 +19,13 @@ docs/
   hugo.toml
   archetypes/default.md
   assets/scss/_styles_project.scss
-  content/en/{_index.md,docs/_index.md,docs/getting-started.md,docs/architecture.md,
-              docs/api-explorer.md,docs/operations.md,docs/testing.md}
+  content/en/{_index.md,docs/_index.md,docs/overview.md,docs/getting-started.md,
+              docs/architecture.md,docs/api-explorer.md,docs/operations.md,
+              docs/changelog/_index.md,docs/contributing/_index.md}
+  layouts/_shortcodes/repo-file.html
   openapi/.gitkeep
   themes/docsy/                       git submodule
-scripts/{migrations.py,coverage.py,openapi.py}
+scripts/{migrations.py,coverage.py,openapi.py,vulnerabilities.py,test_migrations.py,test_vulnerabilities.py}
 src/
   <Prefix>.<Name>.sln
   Domain/<Prefix>.<Name>.Domain/
@@ -54,10 +56,10 @@ src/
     Documentation/SwaggerConfiguration.cs
     Environments/.env.example
     Properties/launchSettings.json
-    Security/{IdentityUser.cs,IdentityUserMapper.cs,JwtAuthTokenIssuer.cs,
-              HttpContextActorAccessor.cs,ActorExtensions.cs}
-    Settings/appsettings{,.Local,.Development,.Production}.json
+    Security/{HttpContextActorAccessor.cs,ActorExtensions.cs}
+    Settings/appsettings.json
 tests/
+  Directory.Build.props          applies default.runsettings to every test project
   default.runsettings
   Domain/<Prefix>.<Name>.Domain.Tests/
   Application/<Prefix>.<Name>.Command.Tests/
@@ -70,7 +72,7 @@ tests/
 tools/<Prefix>.<Name>.OpenApiGen/{Program.cs,<Prefix>.<Name>.OpenApiGen.csproj}
 Directory.Packages.props  Dockerfile  docker-compose.yml
 .editorconfig  .gitattributes  .gitignore  .dockerignore
-README.md  LICENSE
+README.md  CHANGELOG.md  CONTRIBUTING.md  LICENSE
 ```
 
 `tools/` is deliberately **outside** the solution: it references the WebApi to
@@ -92,7 +94,7 @@ OpenApiGen  → WebApi
 `*` Query → Data is a **scaffold-only** edge. `DatabaseHealthCheck` needs
 something to round-trip against, and with no entities there is no repository to
 inject, so it takes `AppDbContext` directly. The moment the first entity exists,
-switch that class to `IAsyncReadOnlyRepository<T>` and drop the reference —
+switch that class to `IAsyncReadOnlyRepository<T, long>` and drop the reference —
 handlers depend on repositories, not on the context. Say so in a comment on the
 `ProjectReference` itself, not only in the class.
 
@@ -140,7 +142,8 @@ dotnet sln src/<Prefix>.<Name>.sln add \
 Delete the files the templates generate that this scaffold replaces:
 `Class1.cs` from each `classlib`, `UnitTest1.cs` from each `xunit` project, and
 the web template's `Program.cs`, `WeatherForecast*`, `Controllers/`,
-`appsettings*.json` (they are rewritten under `Settings/`), and
+`appsettings*.json` (`appsettings.json` is rewritten under `Settings/`; the
+per-environment files are local and gitignored), and
 `<Prefix>.<Name>.WebApi.http`.
 
 ## Project files
@@ -202,7 +205,7 @@ references — `Domain`, `Shared`, and, with the comment above, `Data`:
 
 ```xml
     <!-- Scaffold only: DatabaseHealthCheck takes AppDbContext directly because there is no entity
-         yet, and so no repository to inject. Switch that class to IAsyncReadOnlyRepository<T> when
+         yet, and so no repository to inject. Switch that class to IAsyncReadOnlyRepository<T, long> when
          the first entity lands, and drop this reference — handlers depend on repositories. -->
     <ProjectReference Include="..\..\Infrastructure\<Prefix>.<Name>.Data\<Prefix>.<Name>.Data.csproj" />
 ```

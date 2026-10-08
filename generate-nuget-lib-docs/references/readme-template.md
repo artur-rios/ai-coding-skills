@@ -3,12 +3,16 @@
 Model the README on a well-structured NuGet library repo: a strong one-paragraph overview, a package
 table, install steps, a minimal quick-start with real C#, a short docs index, then the fixed sections.
 
+The README is for the package's consumers — it is also the readme nuget.org shows. Contributor material (building from
+source, tests, branching, versioning, releasing) goes in `CONTRIBUTING.md`, and release history and upgrade guides in
+`CHANGELOG.md` (`references/repo-files.md`); the README only links to them.
+
 Keep prose tight and concrete. Prefer tables for package/status lists. Use fenced ```mermaid blocks only
 for the diagram types the user picked.
 
 ## Skeleton
 
-```markdown
+````markdown
 # <Project Title>
 
 <badges — see references/identity.md>
@@ -45,8 +49,8 @@ dotnet add package <PackageId>
 |---|---|
 | [<Page>](https://<owner>.github.io/<repo>/<slug>/) | ... |
 
-<-- fixed sections appended here, each conditional: Versioning, Build test and publish, Legal -->
-```
+<!-- fixed sections appended here (references/fixed-sections.md): Upgrading (conditional), Changelog, Contributing, Legal (conditional) -->
+````
 
 ## Overview-writing checklist
 
@@ -55,3 +59,5 @@ dotnet add package <PackageId>
 - If the solution ships multiple packages, give the table + (optional) dependency diagram.
 - Show `dotnet add package` + a minimal, runnable quick-start from the real API.
 - Link to the docs site and its key pages.
+- No build, test, branching or release instructions, and no version history — those live in `CONTRIBUTING.md` and
+  `CHANGELOG.md`.

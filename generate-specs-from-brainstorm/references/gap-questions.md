@@ -71,8 +71,8 @@ Everything else on the checklists is a question.
 
 If the brainstorm is silent on all of these, ask once whether to adopt the
 template's default flow (one unit of work = one branch = one issue = one pull
-request, human review required, agent pauses at every stage boundary) rather than
-asking six separate questions.
+request, branched from and merged into `develop`, human review required, agent
+pauses at every stage boundary) rather than asking six separate questions.
 
 ### Business Rules
 
@@ -151,11 +151,11 @@ a fabricated version.
 
 ---
 
-## Phase 3 — README and GitHub backlog
+## Phase 3 — README, CHANGELOG, CONTRIBUTING and GitHub backlog
 
 Phase 3 derives almost everything from the approved documents. These are the only
 questions it can need — ask whatever is still open in one batch, before writing
-the README and before touching GitHub.
+the README, CHANGELOG.md and CONTRIBUTING.md, and before touching GitHub.
 
 ### README
 
@@ -163,11 +163,24 @@ the README and before touching GitHub.
       it (`dotnet restore`, `npm install`, `uv sync`, …).
 - [ ] The command that starts the application, if the documents never state one
       and the project is not a library.
-- [ ] The test command, when the Testing Specification Document does not state it.
 
-Never write a command you cannot point to a document for. A README command that
-does not work is the first thing a reader tries and the first thing that breaks
-their trust in the rest of the file.
+### CONTRIBUTING
+
+- [ ] The build command, when the Technology Stack Document does not determine it.
+- [ ] The test command, and the per-category commands, when the Testing
+      Specification Document does not state them.
+- [ ] Where the version number lives (a project file, or only the release branch
+      and tag) and how it is set, when the Technology Stack Document does not say.
+- [ ] Whether the project starts at 0.x, and if so how it applies SemVer before
+      1.0 (for example, a minor bump marks a breaking change).
+
+What major, minor and patch mean follows from the kind of project — an API
+service, an application, a library (see `templates/CONTRIBUTING.md`); ask only
+when the documents leave the kind itself open.
+
+Never write a command you cannot point to a document for. A README or
+CONTRIBUTING command that does not work is the first thing a reader tries and the
+first thing that breaks their trust in the rest of the file.
 
 ### Milestones and issues
 
