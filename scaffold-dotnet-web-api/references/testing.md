@@ -68,17 +68,31 @@ database:
   </Target>
 ```
 
+## tests/Directory.Build.props
+
+A runsettings file does nothing until a test run is pointed at it. This props
+file points every test project at it — every test project lives under `tests/`
+and no production project does, so nothing under `src/` is affected:
+
+```xml
+<Project>
+  <PropertyGroup>
+    <RunSettingsFilePath>$(MSBuildThisFileDirectory)default.runsettings</RunSettingsFilePath>
+  </PropertyGroup>
+</Project>
+```
+
 ## tests/default.runsettings
 
 Enables the trx logger, so an intermittent failure names itself instead of
-vanishing with the log.
+vanishing with the log — and the tests workflow's `**/TestResults/*.trx` upload
+has something to upload. `ResultsDirectory` stays at its default, each project's
+own `TestResults/`, so projects running concurrently cannot overwrite each other's
+results.
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
-  <RunConfiguration>
-    <ResultsDirectory>TestResults</ResultsDirectory>
-  </RunConfiguration>
   <LoggerRunSettings>
     <Loggers>
       <Logger friendlyName="trx" enabled="True" />
@@ -152,7 +166,7 @@ public sealed class PostgresFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable(TokenIssuerVariable, TokenIssuer);
         Environment.SetEnvironmentVariable(TokenAudienceVariable, TokenAudience);
 
-        // The seeder refuses to start without a configured master user.
+        // The seeder warns when the master user is not configured; set it so the log stays clean.
         Environment.SetEnvironmentVariable(MasterUserOptions.NameVariable, "Master User");
         Environment.SetEnvironmentVariable(MasterUserOptions.EmailVariable, "master@<name>.test");
         Environment.SetEnvironmentVariable(MasterUserOptions.PasswordVariable, "Str0ng-Master-Pass!");
