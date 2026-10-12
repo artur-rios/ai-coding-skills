@@ -77,7 +77,7 @@ Two things carry the pattern instead:
 | Description | "One sentence — what does the API do?" |
 | Env prefix | "Environment variable prefix?" (defaults to the name, upper-cased) |
 | Schema | "PostgreSQL schema name?" (defaults to the name, lower-cased) |
-| License | "Which license? MIT, AGPL, or Custom Commercial." |
+| License | "Which license? Artur Rios Attribution License (default), MIT, AGPL, or Custom Commercial." |
 | Repository | "GitHub owner/repo, for the README badges and the docs site base URL?" |
 
 ## What you get
@@ -198,5 +198,6 @@ code (step 2b) and lets the package win wherever a reference file disagrees.
 | `references/docker.md` | Dockerfile with the migrations bundle, entrypoint, Compose, env examples. |
 | `references/tooling.md` | The Python scripts, the OpenAPI generator, the four workflows, the docs site and its mounts, the API client. |
 | `references/repo-docs.md` | The README outline and the `CHANGELOG.md` and `CONTRIBUTING.md` templates. |
+| `references/license.md` | The default `LICENSE` (Artur Rios Attribution License) and the README's license badge and section. |
 | `references/conventions-template.md` | The `docs/conventions.md` written into the generated repository. |
 | `references/files/` | Copied verbatim to the repository root: `.editorconfig`, `.gitignore`, `.gitattributes`, `.dockerignore`, `.github/workflows/branch-policy.yml`, and the docs site's `repo-file` shortcode with its Changelog and Contributing pages. |

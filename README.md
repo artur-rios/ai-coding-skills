@@ -1,6 +1,6 @@
 # ai-coding-skills
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+[![License: Attribution](https://img.shields.io/badge/License-Attribution-blue.svg)](./LICENSE)
 
 A collection of reusable **agent skills** for AI coding assistants such as
 [Claude Code](https://docs.claude.com/en/docs/claude-code) and
@@ -147,4 +147,4 @@ Artur Rios · arturdev@duck.com
 
 ## Legal
 
-This project is licensed under the terms of the [MIT License](./LICENSE).
+This project is licensed under the [Artur Rios Attribution License](./LICENSE). It is free and open source: you may view, use, fork, modify, and extend it, provided you credit the author, Artur Rios, with a link to [artur-rios.tech](https://artur-rios.tech) or [github.com/artur-rios](https://github.com/artur-rios).

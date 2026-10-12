@@ -42,8 +42,18 @@ Building from source, running the tests, the branching model and the release pro
 
 ## Legal — include only if a license exists or was just created
 
-Adapt the license name, the Wikipedia link, and the badge to the chosen license. The link is absolute, like the
+Adapt the block and the badge to the license the repository actually has. Links are absolute, like the
 Changelog and Contributing ones: the README is packed into the NuGet package, where a relative link is broken.
+
+For the **Artur Rios Attribution License** (the default; its `LICENSE` starts with that title):
+
+```markdown
+## Legal Details
+
+This project is licensed under the [Artur Rios Attribution License](https://github.com/<owner>/<repo>/blob/main/LICENSE). It is free and open source: you may view, use, fork, modify, and extend it, provided you credit the author, Artur Rios, with a link to [artur-rios.tech](https://artur-rios.tech) or [github.com/artur-rios](https://github.com/artur-rios).
+```
+
+For a standard license, name it with its Wikipedia link:
 
 ```markdown
 ## Legal Details
@@ -52,6 +62,7 @@ This project is licensed under the [MIT License](https://en.wikipedia.org/wiki/M
 ```
 
 Common variants:
+- MIT → `[MIT License](https://en.wikipedia.org/wiki/MIT_License)`
 - Apache-2.0 → `[Apache License 2.0](https://en.wikipedia.org/wiki/Apache_License)`
 - GPL-3.0 → `[GNU GPL v3](https://en.wikipedia.org/wiki/GNU_General_Public_License)`
 - BSD-3-Clause → `[BSD 3-Clause License](https://en.wikipedia.org/wiki/BSD_licenses)`

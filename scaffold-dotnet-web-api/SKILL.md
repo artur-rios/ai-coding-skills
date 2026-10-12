@@ -254,11 +254,13 @@ Ask these in one round. Do not create a file until all are answered.
 | "One-sentence description of what the API does?" | — |
 | "Environment variable prefix?" | the name, upper-cased |
 | "PostgreSQL schema name?" | the name, lower-cased |
-| "Which license? MIT, AGPL, or Custom Commercial." | — |
+| "Which license? Artur Rios Attribution License, MIT, AGPL, or Custom Commercial." | Artur Rios Attribution License |
 | "GitHub owner/repo, for the README badges and the docs site base URL?" | — |
 
-For **Custom Commercial**, ask the copyright holder, the license grant, and any
-additional restrictions, then write `LICENSE` from the answers.
+For the default **Artur Rios Attribution License**, `LICENSE` is the fixed text in
+`references/license.md`. For **Custom Commercial**, ask the copyright holder, the
+license grant, and any additional restrictions, then write `LICENSE` from the
+answers.
 
 ### 2. Resolve package versions
 
@@ -374,7 +376,9 @@ unit test and functional test, and the Given-When-Then naming rule.
   `layouts/_shortcodes/repo-file.html` plus its Changelog and Contributing pages.
 - `references/repo-docs.md` — write `README.md` (consumer and operator content
   only, ending with short *Changelog* and *Contributing* sections),
-  `CHANGELOG.md` and `CONTRIBUTING.md`. Then write `LICENSE`.
+  `CHANGELOG.md` and `CONTRIBUTING.md`.
+- `references/license.md` — write `LICENSE`, and the README's license badge and
+  section.
 - If the directory is a git repository, create a local `develop` branch from the
   current branch once the user has committed — or tell them to; never commit for
   them.

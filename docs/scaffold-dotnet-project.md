@@ -62,10 +62,12 @@ the skill front-loads the entire interview.
 | Solution name | "What should the solution be named?" (defaults to the project name) |
 | Prefix | "Should the solution and projects use a company/org prefix?" (e.g. `Acme.`) |
 | Structure | "Do you want a Domain-Driven Design folder structure?" |
-| License | "Which license? MIT, AGPL, or Custom Commercial." |
+| License | "Which license? Artur Rios Attribution License (default), MIT, AGPL, or Custom Commercial." |
 | Repository | "Which GitHub owner/repo will this live in?" — only when there is no git remote |
 
-Choosing **Custom Commercial** triggers follow-ups for the copyright holder, the
+The default, the **Artur Rios Attribution License**, is written from
+`templates/LICENSE` with the current year, and the README's Legal section names it
+and states its attribution condition. Choosing **Custom Commercial** triggers follow-ups for the copyright holder, the
 license grant, and any additional restrictions — the `LICENSE` file is written
 from those answers rather than a one-line stub.
 
@@ -154,6 +156,7 @@ first commit.
 | `templates/CONTRIBUTING.md` | CONTRIBUTING, with a library and an application variant. |
 | `templates/branch-policy-library.yml` | Branch policy for a library: work branches into `develop`, `release/<version>` matching the csproj `<Version>` into `main`, back-merges. |
 | `templates/branch-policy-app.yml` | Branch policy for an application: `feature/` and `fix/` into `develop`, `release/x.y.z` snapshots of `develop` into `main`. |
+| `templates/LICENSE` | The Artur Rios Attribution License text, written as `LICENSE` when the default license is chosen. |
 
 ## What you get back
 

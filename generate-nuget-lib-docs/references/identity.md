@@ -35,7 +35,7 @@ Docs and license badges are always applicable when those things exist:
 
 ```markdown
 [![Docs](https://img.shields.io/badge/docs-website-blue)](https://<owner>.github.io/<repo>)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/<owner>/<repo>/blob/main/LICENSE)
+[![License: Attribution](https://img.shields.io/badge/License-Attribution-blue.svg)](https://github.com/<owner>/<repo>/blob/main/LICENSE)
 ```
 
 Add one shields.io NuGet version badge per published package:
@@ -44,4 +44,5 @@ Add one shields.io NuGet version badge per published package:
 [![<PkgShortName>](https://img.shields.io/nuget/v/<PackageId>.svg?label=<PkgShortName>)](https://www.nuget.org/packages/<PackageId>)
 ```
 
-Swap the license badge label/color to match the chosen license (e.g. `License-Apache_2.0-blue`).
+The badge above is for the Artur Rios Attribution License (the default). Swap the license badge label/color to
+match any other license (e.g. `License: MIT` with `License-MIT-green`, `License-Apache_2.0-blue`).

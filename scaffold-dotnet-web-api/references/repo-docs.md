@@ -36,7 +36,7 @@ Sections, in order:
 8. **Deploy with Docker** — the env-file templates under `docker/` and the three
    `docker compose --env-file …` commands.
 9. **Changelog** and **Contributing** — verbatim below.
-10. **License** (or **Legal**) — the chosen license.
+10. **License** (or **Legal**) — the chosen license; the badge and the section text are in `license.md`.
 
 If the project later tracks its use cases, milestones or backlog in the README, those tables belong
 in the README, between *Documentation* and *Configure*: they describe the product's state, not how to

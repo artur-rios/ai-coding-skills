@@ -47,7 +47,8 @@ hugo new site docs --format toml
 
 ### 2. Install Docsy and its build dependencies with npm
 
-Write `docs/package.json` (fill `<repo>`, `<Project Title>`, and the license's SPDX id):
+Write `docs/package.json` (fill `<repo>`, `<Project Title>`, and the license — `SEE LICENSE IN ../LICENSE` for the
+Artur Rios Attribution License, the SPDX id such as `MIT` for a standard one):
 
 ```json
 {
@@ -55,7 +56,7 @@ Write `docs/package.json` (fill `<repo>`, `<Project Title>`, and the license's S
   "version": "1.0.0",
   "description": "Documentation site for <Project Title>",
   "private": true,
-  "license": "MIT",
+  "license": "SEE LICENSE IN ../LICENSE",
   "scripts": {
     "build": "hugo --minify --cleanDestinationDir --gc",
     "serve": "hugo server"
@@ -161,7 +162,7 @@ locale = 'en-us'
       description = "<one-line project description>"
 
 [params]
-  copyright.authors = '<author-name> | [MIT License](https://github.com/<owner>/<repo>/blob/main/LICENSE)'
+  copyright.authors = '<author-name> | [Artur Rios Attribution License](https://github.com/<owner>/<repo>/blob/main/LICENSE)'
   privacy_policy = ''
   # github_repo and github_branch also tell the repo-file shortcode where to point relative links
   github_repo = 'https://github.com/<owner>/<repo>'
@@ -218,9 +219,10 @@ locale = 'en-us'
   pre = '<i class="fab fa-github"></i>'
 ```
 
-Adapt the license in `copyright.authors` to the chosen one. Hugo skips a mount whose source does not exist, so a
-missing `docs/static/`, `docs/assets/` or `docs/coverage-report/` does not fail the build — but git does not keep empty
-directories, so put a `.gitkeep` in `docs/static/` and `docs/assets/` if the project's own files are meant to go there.
+Adapt the license in `copyright.authors` to the chosen one (e.g. `[MIT License](…)`). Hugo skips a mount whose source
+does not exist, so a missing `docs/static/`, `docs/assets/` or `docs/coverage-report/` does not fail the build — but git
+does not keep empty directories, so put a `.gitkeep` in `docs/static/` and `docs/assets/` if the project's own files are
+meant to go there.
 
 ### 4. Archetype (`docs/archetypes/default.md`)
 
