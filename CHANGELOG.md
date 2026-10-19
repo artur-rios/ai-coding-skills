@@ -11,8 +11,14 @@ No release has been tagged yet. So far the repository holds:
 
 ### Added
 
-- Skills for .NET work: `create-unit-tests`, `create-nuget-publish-workflow`, `generate-nuget-lib-docs` (README plus a
-  Hugo docs site on the Docsy theme), `scaffold-dotnet-project` and `scaffold-dotnet-web-api`.
+- Skills for .NET work: `create-unit-tests`, `create-nuget-publish-workflow` and `generate-nuget-lib-docs` (README plus
+  a Hugo docs site on the Docsy theme).
+- `scaffold-project`, which bootstraps a new repository in any stack — .NET (the layered DDD + CQRS web API, a minimal
+  web API, a NuGet library, any `dotnet new` template), Spring Boot, Python, Node.js / TypeScript, React with
+  shadcn/ui, Angular with spartan/ui, Rust, Flutter, or another one through a generic path. It asks for the technology
+  and the project kind only when the request doesn't name them, asks a NuGet library's package metadata and writes it
+  into the csproj, and lands every stack on one shape: `src/`, `tests/`, `docs/`, README, CHANGELOG, CONTRIBUTING,
+  LICENSE, `.wakatime-project`, `.editorconfig`, `.gitattributes`, `.gitignore` and the branch policy.
 - `commit-staged-changes`, which commits the staged files with a lowercase Conventional Commits message.
 - A specs-to-delivery chain: `generate-specs-from-brainstorm` (project documents, README backlog, GitHub milestones and
   issues), `implement-use-case` (one use case to a review-ready pull request, with approval gates) and
@@ -64,6 +70,12 @@ instead of copying them, and the `develop` / `release/<version>` / `main` branch
   methods, waits for the Branch Policy check, merges only into the integration branch and leaves releases to the owner.
 - `create-unit-tests` marks new test classes with the project's category (`[Trait("Category", "Unit")]` or its own
   marker) when CI runs unit and functional tests as separate filtered jobs.
+
+### Removed
+
+- `scaffold-dotnet-project` and `scaffold-dotnet-web-api`, merged into `scaffold-project` — the generic `dotnet new`
+  scaffold and the layered web API are two of its .NET paths. `sync-skills.ps1` only replaces the skills it finds, so
+  delete the two old folders from your agents' skill directories by hand, or they keep competing for the same requests.
 
 ### Fixed
 

@@ -1,9 +1,11 @@
----
-name: scaffold-dotnet-web-api
-description: Use when the user wants a new .NET 10 ASP.NET Core web API scaffolded from scratch with a layered DDD + CQRS structure — Domain / Application (Command, Query, Shared) / Infrastructure (EF Core + PostgreSQL) / Presentation, mediator-dispatched handlers returning DataOutput, FluentValidation, canonical message-to-status maps, JWT role authorization, Serilog, health checks, Testcontainers test projects, Docker, OpenAPI, a Hugo docs site, CI, a README / CHANGELOG / CONTRIBUTING set, and the develop / release branching model with its branch-policy check. Triggers on "scaffold a .NET web API", "new dotnet API with the heimdall structure", "bootstrap a layered CQRS web API", "set up an API like heimdall-api". Requires a greenfield directory — stops if a `.sln` or `.csproj` already exists.
----
+# .NET Web API — layered DDD + CQRS
 
-# Scaffold .NET Web API
+Read when the .NET kind is **Web API** and the user chose the **layered** structure (or asked for
+"the heimdall structure" / "an API like heimdall-api"). `SKILL.md` has already checked the directory
+(its step 0) and asked the shared questions (its step 3); this file supplies this path's extra
+questions, its whole build-out, its verification and its report. Where it writes a shared file
+itself — README, CHANGELOG, CONTRIBUTING, LICENSE, `.gitignore` — its version
+replaces the template's, as `SKILL.md` step 6 says.
 
 ## Overview
 
@@ -21,38 +23,28 @@ feature would have to delete.
 Two things carry the per-feature pattern forward, since no sample slice does:
 
 - **`docs/conventions.md`**, written into the generated repository, states the
-  pattern a feature follows (see `references/conventions-template.md`). It is
+  pattern a feature follows (see `references/dotnet-web-api/conventions-template.md`). It is
   project documentation, so it outlives this skill.
 - **The health-check vertical is real** — query → handler → `IServiceHealthCheck`
   → output → controller → DI registration → unit test → functional test. It is
   not a domain sample, but it is a working read-side slice, so the shape is
   demonstrated by infrastructure the project actually keeps.
 
-## When to Use
+## When this path applies
 
-**Precondition: the target directory holds no .NET solution and none of the files
-this skill writes.** Check before asking anything (step 0).
+- The user wants a new .NET **web API** with the layered DDD + CQRS structure described here.
+- The user points at `heimdall-api` (or an API built from this path) and asks for "the same
+  patterns" / "the same structure" in a new project.
 
-- The user asks to scaffold / bootstrap / create a new .NET **web API**, and
-  wants the layered DDD + CQRS structure described here.
-- The user points at `heimdall-api` (or an API built from this skill) and asks
-  for "the same patterns" / "the same structure" in a new project.
+Take the **minimal** Web API path in `references/dotnet.md` instead when the user wants a web API
+without this stack. A user adding a feature to an existing project of this shape wants that project's
+own `docs/conventions.md`, or **implement-use-case** when it has workflow and use case specification
+documents — not a scaffold.
 
-Skip / adapt if:
-- The user wants a **generic** .NET scaffold — a class library, a console app, a
-  worker, or a web API without this stack — use **scaffold-dotnet-project**,
-  which asks for a `dotnet new` template and produces a minimal layout.
-- The user is adding a feature to an **existing** project of this shape — this
-  skill scaffolds a whole repository. Follow the project's own
-  `docs/conventions.md`, or use **implement-use-case** when the project has
-  workflow and use case specification documents.
-- The user wants documentation or a NuGet publish workflow for an existing
-  solution — that is **generate-nuget-lib-docs** / **create-nuget-publish-workflow**.
-
-## The stack this skill scaffolds
+## The stack this path scaffolds
 
 Non-negotiable — the patterns are made of these packages. If the user does not
-want them, they want **scaffold-dotnet-project**, not this skill.
+want them, they want the minimal Web API path in `references/dotnet.md`, not this one.
 
 | Package | What it provides |
 | --- | --- |
@@ -66,7 +58,7 @@ want them, they want **scaffold-dotnet-project**, not this skill.
 | `FluentValidation`, EF Core 10, `EFCore.NamingConventions`, Serilog, Swashbuckle, xUnit, Moq, Bogus, Testcontainers.PostgreSql | the rest |
 
 Versions are **discovered at scaffold time**, never hardcoded here — see
-`references/packages.md`.
+`references/dotnet-web-api/packages.md`.
 
 ## Naming
 
@@ -169,7 +161,7 @@ catches, and a second one needs the same sentence written next to it.
   package management here; without them a project resolves EF Core one patch
   ahead of another and the build fails with CS1705.
 - "Only the WebApi needs a csproj, the other layers can be folders" → NO. Six
-  source projects, each with its own csproj. This is not `scaffold-dotnet-project`.
+  source projects, each with its own csproj. This is not the minimal Web API path.
 - "I'll skip `dotnet build` — the templates are known-good" → NO. A scaffold
   that has not been built is not a scaffold. Verify (step 9).
 - "I'll write a real `docker/local.env` so it runs immediately" → NO. Only
@@ -225,46 +217,32 @@ catches, and a second one needs the same sentence written next to it.
 
 Create a todo per step. **Collect every answer before creating any file.**
 
-### 0. Check the directory is safe to scaffold into
+### 0. Files this path writes beyond the shared ones
 
-```bash
-ls -a
-find . -path ./.git -prune -o \( -name "*.sln" -o -name "*.slnx" -o -name "*.csproj" \) -print
-```
+`SKILL.md` step 0 already ran. Add these to the files it checks for, and ask per file before
+overwriting any that exist: `.dockerignore`, `Dockerfile`, `docker-compose.yml`,
+`Directory.Packages.props`, anything under `.github/workflows/`, `docker/`, `scripts/`, `api-client/`
+and `docs/`.
 
-- **A solution or project exists** → not greenfield. Stop, say what you found,
-  and point at the alternatives in *Skip / adapt if*.
-- **Any file this skill writes exists** (`README.md`, `CHANGELOG.md`,
-  `CONTRIBUTING.md`, `LICENSE`, `.editorconfig`, `.gitignore`, `.gitattributes`,
-  `.dockerignore`, `Dockerfile`, `docker-compose.yml`, `Directory.Packages.props`,
-  anything under `.github/workflows/`) → name each one and ask whether to
-  overwrite, before the interview. Honour the answer per file.
-- **Empty or unrelated files only** → proceed.
+### 1. Interview — this path's extra questions
 
-Never overwrite silently.
-
-### 1. Interview — ask everything, then stop asking
-
-Ask these in one round. Do not create a file until all are answered.
+Asked in the same round as `SKILL.md`'s shared questions. The shared name question is "What is the API
+called? (PascalCase, e.g. `Heimdall`)"; there is no separate solution name.
 
 | Question | Default |
 | --- | --- |
-| "What is the API called? (PascalCase, e.g. `Heimdall`)" | — |
 | "Company/org prefix for the solution and projects? (e.g. `ArturRios`; blank for none)" | none |
-| "One-sentence description of what the API does?" | — |
 | "Environment variable prefix?" | the name, upper-cased |
 | "PostgreSQL schema name?" | the name, lower-cased |
-| "Which license? Artur Rios Attribution License, MIT, AGPL, or Custom Commercial." | Artur Rios Attribution License |
-| "GitHub owner/repo, for the README badges and the docs site base URL?" | — |
 
-For the default **Artur Rios Attribution License**, `LICENSE` is the fixed text in
-`references/license.md`. For **Custom Commercial**, ask the copyright holder, the
-license grant, and any additional restrictions, then write `LICENSE` from the
-answers.
+The GitHub owner/repo is needed for the README badges and the docs site base URL — parse it from the
+remote, or it was the shared repository question. For the default **Artur Rios Attribution License**,
+`LICENSE` is the fixed text in `references/dotnet-web-api/license.md`. For **Custom Commercial**,
+write `LICENSE` from the shared follow-up answers.
 
 ### 2. Resolve package versions
 
-Read `references/packages.md` and follow it. It queries nuget.org, applies the
+Read `references/dotnet-web-api/packages.md` and follow it. It queries nuget.org, applies the
 runtime-versioning rule for `Microsoft.*` packages, and produces
 `Directory.Packages.props`. **Stop and report** if any package resolves to
 nothing rather than guessing a version.
@@ -302,7 +280,7 @@ what compiles and say so in step 10.
 
 ### 3. Create the projects and the solution
 
-Read `references/layout.md`. It has the directory tree, the exact `dotnet new`
+Read `references/dotnet-web-api/layout.md`. It has the directory tree, the exact `dotnet new`
 and `dotnet sln` commands, the project reference graph, and the contents of
 every `.csproj`.
 
@@ -312,19 +290,19 @@ deliberately **outside** the solution.
 
 ### 4. Write the Domain, Shared, and Data layers
 
-- `references/data.md` — `AppDbContext`, `DbContextDiagnosticsOptions`,
+- `references/dotnet-web-api/data.md` — `AppDbContext`, `DbContextDiagnosticsOptions`,
   `DesignTimeDbContextFactory`, `DatabaseSeeder`, `MasterUserOptions`, and the
   entity-map convention the (empty) `EntityMaps/` folder will hold.
-- `references/shared.md` — `DataAccessMessageMap`, `PaginationMessages`,
+- `references/dotnet-web-api/shared.md` — `DataAccessMessageMap`, `PaginationMessages`,
   `IActorAccessor`, `IActorScoped`.
 - Domain holds `Enums/Roles.cs` and an empty `Entities/` folder.
 - **Create the initial migration.** `EntityMaps/` is empty, but the context
   declares the Data Protection key ring and `Startup` persists keys to it, so the
-  table has to exist. `references/data.md` has the command.
+  table has to exist. `references/dotnet-web-api/data.md` has the command.
 
 ### 5. Write the Application query layer (health checks)
 
-`references/observability.md` — `IServiceHealthCheck`, `DatabaseHealthCheck`,
+`references/dotnet-web-api/observability.md` — `IServiceHealthCheck`, `DatabaseHealthCheck`,
 `HealthStatuses`, `DetailedHealthQuery`, `GetDetailedHealthQueryHandler`,
 `HealthCheckOutput`, `ServiceHealthOutput`, `PaginatedQueryValidator` (in the
 Query project), and the Serilog configuration.
@@ -340,44 +318,48 @@ domain yet.
 
 ### 6. Write the Presentation layer
 
-`references/startup.md` — `Program`, `Startup` (constructor and
+`references/dotnet-web-api/startup.md` — `Program`, `Startup` (constructor and
 `ConfigureStandardSequence`, `CreateApplication`, `ConfigureServices`,
 `EdgePipeline`, `AddDependencies`, `ConfigureCors`, `ConfigureSecurity`), the
 pipeline Util.WebApi's `UseStandardMiddlewares` fixes and what sits around it,
 `Settings/appsettings.json`, `Environments/.env.example`, `launchSettings.json`,
 `ModelBindingConfiguration`, `SwaggerConfiguration`.
 
-`references/security.md` — `Roles` wiring, the authenticated caller (no identity
+`references/dotnet-web-api/security.md` — `Roles` wiring, the authenticated caller (no identity
 class, mapper or token issuer of its own), `HttpContextActorAccessor`, `ActorExtensions`, and the
 `HealthCheckController`.
 
 ### 7. Write the test projects
 
-`references/testing.md` — the six test `.csproj` files, `PostgresFixture`,
+`references/dotnet-web-api/testing.md` — the six test `.csproj` files, `PostgresFixture`,
 `FunctionalCollection`, `TestTokens`, `default.runsettings`, the health-check
 unit test and functional test, and the Given-When-Then naming rule.
 
 ### 8. Write the repository furniture
 
-- `references/docker.md` — `Dockerfile`, `docker-compose.yml`,
+- `references/dotnet-web-api/docker.md` — `Dockerfile`, `docker-compose.yml`,
   `docker/entrypoint.sh`, `docker/{local,development,production}.env.example`.
   **Only `.example` files.**
-- `references/tooling.md` — `scripts/migrations.py`, `scripts/coverage.py`,
+- `references/dotnet-web-api/tooling.md` — `scripts/migrations.py`, `scripts/coverage.py`,
   `scripts/openapi.py`, `scripts/vulnerabilities.py`, the `OpenApiGen` tool,
   `.config/dotnet-tools.json`,
   `.github/workflows/{tests,check-openapi,build-docs,branch-policy}.yml`, the
   Hugo/Docsy site under `docs/`, and the `api-client/` `.http` + Bruno
   collections.
-- `references/conventions-template.md` — write it to `docs/conventions.md`,
+- `references/dotnet-web-api/conventions-template.md` — write it to `docs/conventions.md`,
   substituting the project's own names.
-- Copy `references/files/` to the repository root, preserving its tree:
-  `.editorconfig`, `.gitignore`, `.gitattributes`, `.dockerignore`,
-  `.github/workflows/branch-policy.yml`, and the docs site's
+- Copy `references/dotnet-web-api/files/` to the repository root, preserving its tree:
+  `.gitignore`, `.dockerignore`, and the docs site's
   `layouts/_shortcodes/repo-file.html` plus its Changelog and Contributing pages.
-- `references/repo-docs.md` — write `README.md` (consumer and operator content
+- From `SKILL.md` step 6: `.gitattributes` — `templates/.gitattributes` with the lines of
+  `references/dotnet-web-api/files/.gitattributes` appended — `.editorconfig` from
+  `templates/dotnet/.editorconfig`,
+  `.github/workflows/branch-policy.yml` from `templates/branch-policy-app.yml` (verbatim — it has no
+  project-specific values), the shared ignores appended to `.gitignore`, and `.wakatime-project`.
+- `references/dotnet-web-api/repo-docs.md` — write `README.md` (consumer and operator content
   only, ending with short *Changelog* and *Contributing* sections),
   `CHANGELOG.md` and `CONTRIBUTING.md`.
-- `references/license.md` — write `LICENSE`, and the README's license badge and
+- `references/dotnet-web-api/license.md` — write `LICENSE`, and the README's license badge and
   section.
 - If the directory is a git repository, create a local `develop` branch from the
   current branch once the user has committed — or tell them to; never commit for
@@ -430,7 +412,7 @@ the database type; `GET /healthcheck` must answer 200 and
 
 ### 10. Report
 
-Tell the user: the solution and project names, the resolved versions of the
+This replaces `SKILL.md` step 9. Tell the user: the solution and project names, the resolved versions of the
 `ArturRios.*` packages, the folder structure, the license, what the build and
 each test run actually printed, and the three things they must do before the API
 will start — copy an env file from its `.example`, set the master-user and token

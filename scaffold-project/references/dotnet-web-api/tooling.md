@@ -170,7 +170,7 @@ context and fails there while every other job stays green.
 Set `concurrency: { group: tests-${{ github.ref }}, cancel-in-progress: true }`.
 
 Leave both jobs without a `name:`. Their ids, `test` and `docker`, are then the
-check names the rulesets require (see SKILL.md step 10) — renaming a job silently
+check names the rulesets require (see `overview.md` step 10) — renaming a job silently
 un-requires it.
 
 ### check-openapi.yml
@@ -187,7 +187,7 @@ blocks the merge forever.
 
 ### branch-policy.yml
 
-Copied verbatim from `files/.github/workflows/branch-policy.yml`. On every pull
+Copied verbatim from the skill's `templates/branch-policy-app.yml`. On every pull
 request into `develop` or `main` it enforces the branching model the generated
 `CONTRIBUTING.md` describes: into `develop` only from `feature/<name>`,
 `fix/<name>` or `dependabot/…`, and only from a branch cut from `develop`; into

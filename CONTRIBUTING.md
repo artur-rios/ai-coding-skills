@@ -84,7 +84,7 @@ Pull requests into `develop` and `main` must pass the branch policy check
 merge commits only.
 
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/) with a lowercase subject, e.g.
-`feat: add scaffold-dotnet-web-api skill` or `fix: scope skills and align them on one pattern`. The
+`feat: add scaffold-project skill` or `fix: scope skills and align them on one pattern`. The
 `commit-staged-changes` skill in this repository writes them.
 
 Record every change a user of the skills would notice under `## [Unreleased]` in [CHANGELOG.md](./CHANGELOG.md), in the

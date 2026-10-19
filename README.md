@@ -23,8 +23,7 @@ hand, you just describe what you want.
 | **create-unit-tests** | Generates a thorough unit-test suite for a target project, using Given-When-Then test names, carrying the project's test category, and covering happy paths plus edge cases. | [docs/create-unit-tests.md](docs/create-unit-tests.md) |
 | **create-nuget-publish-workflow** | Generates a tag-triggered GitHub Actions workflow that publishes a .NET library's NuGet package(s) to nuget.org and GitHub Packages, only from tags on `main` that match the csproj version. Requires a repo that actually ships a package. | [docs/create-nuget-publish-workflow.md](docs/create-nuget-publish-workflow.md) |
 | **generate-nuget-lib-docs** | Generates a consumer-facing README (package table, NuGet badges, install commands), a CHANGELOG.md and a CONTRIBUTING.md, plus a Hugo docs site (Docsy theme) that renders those two files, deployed to GitHub Pages via CI, for a .NET library published as NuGet packages. | [docs/generate-nuget-lib-docs.md](docs/generate-nuget-lib-docs.md) |
-| **scaffold-dotnet-project** | Bootstraps a new .NET solution from scratch — `dotnet new` template, DDD or basic layout, config files, README, CHANGELOG, CONTRIBUTING, LICENSE and the develop / release branch policy, verified with a build. | [docs/scaffold-dotnet-project.md](docs/scaffold-dotnet-project.md) |
-| **scaffold-dotnet-web-api** | Bootstraps a whole .NET 10 web API repository in the layered DDD + CQRS style — six source projects, six test projects, Docker, CI, OpenAPI, docs site, README / CHANGELOG / CONTRIBUTING and the develop / release branching model — with every cross-cutting concern wired and no domain in it. | [docs/scaffold-dotnet-web-api.md](docs/scaffold-dotnet-web-api.md) |
+| **scaffold-project** | Bootstraps a new repository in any stack — .NET (layered DDD + CQRS web API, minimal web API, NuGet library with its package metadata, any `dotnet new` template), Spring Boot, Python, Node.js / TypeScript, React with shadcn/ui, Angular with spartan/ui, Rust, Flutter — all on one shape: `src/`, `tests/`, `docs/`, README, CHANGELOG, CONTRIBUTING, LICENSE, `.wakatime-project` and the develop / release branch policy, verified with a build and the tests. | [docs/scaffold-project.md](docs/scaffold-project.md) |
 | **commit-staged-changes** | Commits the already-staged files with a lowercase Conventional Commits message that follows the 50/72 rule. | [docs/commit-staged-changes.md](docs/commit-staged-changes.md) |
 | **generate-specs-from-brainstorm** | Expands a `Brainstorm.md` into fourteen project documents — an informal `initial/` set, a formal `requirements/` set, and a README, CHANGELOG and CONTRIBUTING — then derives GitHub milestones and issues from the use cases, pausing for review at each hand-off. | [docs/generate-specs-from-brainstorm.md](docs/generate-specs-from-brainstorm.md) |
 | **implement-use-case** | Drives one use case from backlog to a review-ready pull request into the integration branch (`develop` where the repository enforces that model), following the project's own workflow documents, marking it done in the README backlog, adding its Unreleased CHANGELOG entry, and pausing for approval at every stage boundary. | [docs/implement-use-case.md](docs/implement-use-case.md) |
@@ -48,8 +47,7 @@ and what files it contains.
 │   ├── generate-specs-from-brainstorm.md
 │   ├── implement-use-case.md
 │   ├── implement-use-cases-batch.md
-│   ├── scaffold-dotnet-project.md
-│   ├── scaffold-dotnet-web-api.md
+│   ├── scaffold-project.md
 │   └── commit-staged-changes.md
 ├── create-unit-tests/
 │   ├── SKILL.md
@@ -70,13 +68,10 @@ and what files it contains.
 ├── implement-use-cases-batch/
 │   ├── SKILL.md
 │   └── references/
-├── scaffold-dotnet-project/
+├── scaffold-project/
 │   ├── SKILL.md
 │   ├── references/
 │   └── templates/
-├── scaffold-dotnet-web-api/
-│   ├── SKILL.md
-│   └── references/
 └── commit-staged-changes/
     └── SKILL.md
 ```

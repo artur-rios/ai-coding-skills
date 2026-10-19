@@ -2,7 +2,7 @@
 GUIDANCE — delete this comment block in the generated file.
 
 Substitutions:
-  {{Project}}   the project name with its prefix, e.g. Acme.OrderService
+  {{Project}}   the project name as the stack writes it (with its prefix, for .NET)
   {{owner}}     GitHub owner, from `git remote get-url origin`; ask if there is no remote
   {{repo}}      GitHub repository name, same source
 
@@ -23,6 +23,6 @@ No release has been tagged yet.
 
 ### Added
 
-- The initial solution.
+- The initial project scaffold.
 
 [Unreleased]: https://github.com/{{owner}}/{{repo}}/commits/develop

@@ -72,7 +72,9 @@ jobs:
         if: github.base_ref == 'main'
         env:
           HEAD: ${{ github.head_ref }}
-          CSPROJ: __CSPROJ_PATH__
+          # The file the version lives in, and a grep -P pattern whose \K match is the version.
+          VERSION_FILE: __VERSION_FILE__
+          VERSION_PATTERN: '__VERSION_PATTERN__'
         run: |
           set -euo pipefail
           # release/1.2.3 or release/v1.2.3 -> 1.2.3
@@ -82,13 +84,13 @@ jobs:
             echo "::error::Release branches must be named release/<version>, e.g. release/1.2.3 (got '$HEAD')."
             exit 1
           fi
-          # "|| true": with pipefail, a csproj without <Version> would end the step
+          # "|| true": with pipefail, a file without a version would end the step
           # here, before the error below says what is wrong.
-          CS_PROJ_VERSION=$(grep -oP '<Version>\K[^<]+' "$CSPROJ" | head -1 || true)
+          SOURCE_VERSION=$(grep -oP -m1 "$VERSION_PATTERN" "$VERSION_FILE" | head -1 || true)
           echo "Release branch version: $RELEASE_VERSION"
-          echo "csproj version:         ${CS_PROJ_VERSION:-<none>}"
-          if [ "$RELEASE_VERSION" != "$CS_PROJ_VERSION" ]; then
-            echo "::error::$CSPROJ has <Version>${CS_PROJ_VERSION:-<none>}</Version>, but the branch releases $RELEASE_VERSION. Bump the version on the release branch."
+          echo "Source version:         ${SOURCE_VERSION:-<none>}"
+          if [ "$RELEASE_VERSION" != "$SOURCE_VERSION" ]; then
+            echo "::error::$VERSION_FILE declares version ${SOURCE_VERSION:-<none>}, but the branch releases $RELEASE_VERSION. Bump the version on the release branch."
             exit 1
           fi
           if [ -n "$(git tag --list "$RELEASE_VERSION" "v$RELEASE_VERSION")" ]; then

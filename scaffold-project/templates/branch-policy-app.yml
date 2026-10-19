@@ -52,7 +52,8 @@ jobs:
 
           case "$BASE_REF" in
             develop)
-              [[ "$HEAD_REF" =~ ^(feature|fix)/[a-z0-9][a-z0-9._-]*$ || "$HEAD_REF" =~ ^dependabot/ ]]                 || fail "Pull requests into develop must come from feature/<name> or fix/<name> (lowercase, digits, . _ -), not '$HEAD_REF'."
+              [[ "$HEAD_REF" =~ ^(feature|fix)/[a-z0-9][a-z0-9._-]*$ || "$HEAD_REF" =~ ^dependabot/ ]] \
+                || fail "Pull requests into develop must come from feature/<name> or fix/<name> (lowercase, digits, . _ -), not '$HEAD_REF'."
 
               # Commits on main that develop does not have are the release merge commits. A branch
               # that contains one of them was cut from main, not from develop.
@@ -63,9 +64,11 @@ jobs:
               done
               ;;
             main)
-              [[ "$HEAD_REF" =~ ^release/[0-9]+\.[0-9]+\.[0-9]+$ ]]                 || fail "Pull requests into main must come from release/<major>.<minor>.<patch>, not '$HEAD_REF'."
+              [[ "$HEAD_REF" =~ ^release/[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+                || fail "Pull requests into main must come from release/<major>.<minor>.<patch>, not '$HEAD_REF'."
 
-              git merge-base --is-ancestor "$HEAD_SHA" origin/develop                 || fail "'$HEAD_REF' has commits that are not on develop. A release is a snapshot of develop: land the change on develop through a feature/ or fix/ branch and cut the release again."
+              git merge-base --is-ancestor "$HEAD_SHA" origin/develop \
+                || fail "'$HEAD_REF' has commits that are not on develop. A release is a snapshot of develop: land the change on develop through a feature/ or fix/ branch and cut the release again."
 
               version="${HEAD_REF#release/}"
               if git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null; then

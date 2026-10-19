@@ -116,7 +116,7 @@ public class Startup : WebApiStartup
     {
         // Before anything else, so every later step has somewhere to log. LoadConfiguration has not
         // run yet — Build runs it — which is why ConfigureLogging reads its settings straight from
-        // the process environment (see references/observability.md).
+        // the process environment (see references/dotnet-web-api/observability.md).
         ConfigureLogging();
         Builder.Host.UseSerilog();
 
@@ -409,7 +409,7 @@ endpoints without `[RoleRequirement]` are simply open.
         // container; JwtTokenValidator additionally needs JwtConfiguration, JwtHandler, and a claims
         // mapper. The non-generic overload registers DefaultAuthenticatedUserMapper, which maps Id
         // and RoleId through TokenClaimKeys — exactly what this API needs, so it writes no mapper of
-        // its own (see references/security.md). Defaults are kept otherwise — app JWT only, read
+        // its own (see references/dotnet-web-api/security.md). Defaults are kept otherwise — app JWT only, read
         // from the Authorization header, user rebuilt from claims — so no database read per request.
         Builder.Services.AddSingleton(BuildJwtConfiguration());
         Builder.Services.AddSingleton<JwtHandler>();
@@ -779,7 +779,7 @@ Everything the API reads from the environment when it runs from source. Copy to
 
 ```bash
 # Search Path stays public. The entities still live in the <name> schema (AppDbContext's default
-# schema); naming that schema here fails on a fresh database with 3F000 — see references/docker.md.
+# schema); naming that schema here fails on a fresh database with 3F000 — see references/dotnet-web-api/docker.md.
 <NAME>_DATA_CONNECTIONSTRING=Host=localhost;Port=5432;Database=<name>;Username=;Password=;Search Path=public
 <NAME>_DATA_DATABASETYPE=PostgreSql
 

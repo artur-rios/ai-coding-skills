@@ -181,6 +181,6 @@ public interface IActorScoped
 ```
 
 Mark both properties `[JsonIgnore]` on every command or query that implements
-`IActorScoped`. `ModelBindingConfiguration` (see `references/startup.md`) turns
+`IActorScoped`. `ModelBindingConfiguration` (see `references/dotnet-web-api/startup.md`) turns
 that attribute into a non-bindable property, which is what stops a caller from
 supplying their own actor in the query string.

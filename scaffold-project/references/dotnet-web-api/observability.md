@@ -96,7 +96,7 @@ status is computed from returned values. `GetDetailedHealthQueryHandler` returns
 `DataOutput<HealthCheckOutput?>` like every other query handler — an unhealthy
 dependency is data on a successful envelope, not an error, because the request to
 report health succeeded. The controller maps the reported status to 503; see
-`references/security.md`.
+`references/dotnet-web-api/security.md`.
 
 ## Input/DetailedHealthQuery.cs
 

@@ -104,7 +104,7 @@ the README.
 ## Project structure
 
 ```
-<the annotated tree from references/layout.md, trimmed to one line per folder>
+<the annotated tree from references/dotnet-web-api/layout.md, trimmed to one line per folder>
 ```
 
 ## Build

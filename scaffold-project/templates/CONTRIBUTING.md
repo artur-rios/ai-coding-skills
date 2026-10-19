@@ -2,46 +2,38 @@
 GUIDANCE — delete this comment block, and every "VARIANT" block that does not
 apply, in the generated file.
 
-Two variants, picked by the project template (step 7 of SKILL.md):
-  LIBRARY      the template is `classlib` — versioned in the csproj, released by
-               tagging main; release branches carry the version bump and the
-               CHANGELOG finalization; main is merged back into develop.
+Two variants, picked by the project kind (step 6 of SKILL.md):
+  LIBRARY      a library — NuGet, PyPI, npm, a Rust library crate, a .NET
+               classlib. The version lives in a file, the release branch carries
+               the version bump and the CHANGELOG finalization, and main is
+               merged back into develop. Tags are the bare version.
                Pairs with templates/branch-policy-library.yml.
-  APPLICATION  any other template — the version is the release branch name and
-               its tag; release branches are snapshots of develop and carry no
+  APPLICATION  anything else — the version is the release branch name and its
+               tag; release branches are snapshots of develop and carry no
                commits. Pairs with templates/branch-policy-app.yml.
 
-Substitutions:
-  {{SDK}}        the SDK major version the projects target, e.g. 10.0
-  {{Solution}}   src/<Prefix.>SolutionName.sln
-  {{CSPROJ}}     the main project's csproj path (LIBRARY only)
+Substitutions — all from the stack reference's "CONTRIBUTING fill-ins":
+  {{Prerequisites}}   bullet list of the toolchain, each with a link (Git is already listed)
+  {{Build}}           the build command(s), in a ```bash block
+  {{Testing}}         where the tests live, how they are named and split, and the
+                      command(s) that run them
+  {{VersionFile}}     where the version lives, e.g. `version` in `pyproject.toml`
+                      (LIBRARY only)
 -->
 # Contributing
 
 ## Prerequisites
 
-- [.NET SDK {{SDK}}](https://dotnet.microsoft.com/download) or later
+{{Prerequisites}}
 - Git
 
 ## Build
 
-```bash
-dotnet build {{Solution}}
-```
+{{Build}}
 
 ## Testing
 
-Tests live under `tests/`, one test project per project under test, and are written with xUnit. Every test is named
-with the Given / When / Then pattern (`GivenSomeCondition_WhenSomeAction_ThenSomeOutput`), and every test class carries
-a `Category` trait — `[Trait("Category", "Unit")]` or `[Trait("Category", "Functional")]` — so the two kinds can be run,
-and reported, separately:
-
-```bash
-dotnet test {{Solution}} --filter "Category=Unit"
-dotnet test {{Solution}} --filter "Category=Functional"
-```
-
-Unit tests exercise the code in isolation against test doubles; functional tests exercise it end to end.
+{{Testing}}
 
 <!-- VARIANT: LIBRARY -->
 ## Branching and pull requests
@@ -69,14 +61,15 @@ types, members or non-breaking behaviour changes increment the minor version; fi
 While the version is below 1.0.0, SemVer allows anything to change; a breaking change then increments the minor
 version.
 
-The version is the `<Version>` in `{{CSPROJ}}`.
+The version is {{VersionFile}}.
 
 ## Releasing
 
-1. Cut `release/<version>` from `develop`, set `<Version>` in `{{CSPROJ}}` to that version, rename `## [Unreleased]` in
+1. Cut `release/<version>` from `develop`, set {{VersionFile}} to that version, rename `## [Unreleased]` in
    [CHANGELOG.md](./CHANGELOG.md) to `## [<version>] - <yyyy-mm-dd>` above a fresh, empty `## [Unreleased]`, update the
    links at the bottom, and open a pull request into `main`. Only `release/*` branches can be merged into `main`, and
-   the branch policy check rejects a release whose version differs from the csproj's or is already tagged.
+   the branch policy check rejects a release whose version differs from the one in the source or is already
+   tagged.
 2. Once it is merged, tag the merge commit on `main` with the version:
 
    ```bash
