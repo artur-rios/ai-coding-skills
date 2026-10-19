@@ -38,7 +38,7 @@ Skip / adapt if:
   follow that repository's own conventions instead.
 - The repository exists and the user only wants a piece of it: tests
   (**create-unit-tests**), a NuGet publish workflow (**create-nuget-publish-workflow**),
-  a library README and docs site (**generate-nuget-lib-docs**), or project
+  a README and docs site (**generate-project-docs**), or project
   documentation from notes (**generate-specs-from-brainstorm**).
 
 ## The shared repository shape
@@ -246,7 +246,7 @@ you changed in the report.
 ### 8. Follow-up skills — only those the user said yes to
 
 The NuGet library interview asks whether to also run **create-nuget-publish-workflow**
-and **generate-nuget-lib-docs**. Run each one the user accepted, now that the scaffold
+and **generate-project-docs**. Run each one the user accepted, now that the scaffold
 builds.
 
 ### 9. Report

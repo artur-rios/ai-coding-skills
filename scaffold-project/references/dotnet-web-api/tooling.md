@@ -271,7 +271,7 @@ testing page, no branching or release page, no release history. Instead, copying
 `files/` to the repository root adds:
 
 - `docs/layouts/_shortcodes/repo-file.html` — renders a mounted root file, drops
-  its H1 (the page has a title) and points its `./relative` links at the file on
+  its H1 (the page has a title) and points its relative links at the file on
   GitHub, using `github_repo` and `github_branch`;
 - `docs/content/en/docs/changelog/_index.md` and `contributing/_index.md` — one
   `{{< repo-file "…" >}}` call each, weighted 900 and 1000 so they sit last in

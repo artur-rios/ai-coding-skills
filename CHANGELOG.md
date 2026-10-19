@@ -11,8 +11,13 @@ No release has been tagged yet. So far the repository holds:
 
 ### Added
 
-- Skills for .NET work: `create-unit-tests`, `create-nuget-publish-workflow` and `generate-nuget-lib-docs` (README plus
-  a Hugo docs site on the Docsy theme).
+- Skills for .NET work: `create-unit-tests` and `create-nuget-publish-workflow`.
+- `generate-project-docs`, which documents an existing project in any stack — a library published as packages
+  (NuGet, npm, PyPI, crates.io, Maven Central, pub.dev, Go modules) or an application (API, web app, CLI, worker,
+  mobile app) — with a README for its users (a package table, registry badges and install commands for a library;
+  configure, run and deploy for an application), a CHANGELOG.md and a CONTRIBUTING.md, plus a Hugo docs site on the
+  Docsy theme that renders those two files, with application pages (Swagger UI over a committed OpenAPI document) and
+  an optional test coverage report, deployed to GitHub Pages.
 - `scaffold-project`, which bootstraps a new repository in any stack — .NET (the layered DDD + CQRS web API, a minimal
   web API, a NuGet library, any `dotnet new` template), Spring Boot, Python, Node.js / TypeScript, React with
   shadcn/ui, Angular with spartan/ui, Rust, Flutter, or another one through a generic path. It asks for the technology
@@ -78,6 +83,7 @@ instead of copying them, and the `develop` / `release/<version>` / `main` branch
 
 ### Removed
 
+- `generate-nuget-lib-docs`, generalized into `generate-project-docs`; a .NET library is documented as before.
 - `scaffold-dotnet-project` and `scaffold-dotnet-web-api`, merged into `scaffold-project` — the generic `dotnet new`
   scaffold and the layered web API are two of its .NET paths. The next `sync-skills.ps1` run removes the two old
   folders from your agents' skill directories.

@@ -6,7 +6,7 @@ the library branch-policy variant — and this file adds the package metadata nu
 csproj properties that carry it, and the pack check.
 
 The csproj is the single source of the metadata: **create-nuget-publish-workflow** packs it as is and
-**generate-nuget-lib-docs** reads the `<PackageId>` from it, so nothing here goes in a `.nuspec`.
+**generate-project-docs** reads the `<PackageId>` from it, so nothing here goes in a `.nuspec`.
 
 ## Interview
 
@@ -24,7 +24,7 @@ or a blank takes it.
 | "Project URL — the repository, or a docs site?" | `https://github.com/<owner>/<repo>` | `<PackageProjectUrl>` |
 | "Package icon — path to a square PNG, at least 128×128, inside the repository? (blank for none)" | none | `<PackageIcon>` + a packed `<None>` item; omitted when blank |
 | "After the scaffold builds, also generate the NuGet publish workflow (create-nuget-publish-workflow)?" | yes | step 8 of `SKILL.md` |
-| "And the README + Hugo docs site (generate-nuget-lib-docs)?" | yes | step 8 of `SKILL.md` — that skill then rewrites the README this skill writes |
+| "And the README + Hugo docs site (generate-project-docs)?" | yes | step 8 of `SKILL.md` — that skill then rewrites the README this skill writes |
 
 The description is the shared one-sentence answer (`<Description>`). The license is the shared license
 answer, mapped below. The repository URL comes from the remote or the owner/repo answer.
@@ -112,7 +112,7 @@ The README is packed into the package and rendered on nuget.org, so:
 - Add a NuGet badge under the title:
   `[![NuGet](https://img.shields.io/nuget/v/<PackageId>.svg)](https://www.nuget.org/packages/<PackageId>)`
 
-If the user accepted generate-nuget-lib-docs, that skill replaces this README in step 8; write it
+If the user accepted generate-project-docs, that skill replaces this README in step 8; write it
 anyway so the pack check below has a README to pack.
 
 ## Verify

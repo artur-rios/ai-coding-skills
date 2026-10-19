@@ -8,7 +8,7 @@
 {{- with resources.Get (path.Join "repo" $name) -}}
   {{- $text := replaceRE `^\x{FEFF}?# [^\n]*\n+` "" .Content -}}
   {{- $base := printf "%s/blob/%s/" site.Params.github_repo site.Params.github_branch -}}
-  {{- $text = replaceRE `\]\(\./([^)]+)\)` (printf "](%s$1)" $base) $text -}}
+  {{- $text = replaceRE `\]\((?:\./)?([^)/#:][^):]*)\)` (printf "](%s$1)" $base) $text -}}
   {{- $.Page.RenderString (dict "display" "block") $text -}}
 {{- else -}}
   {{- errorf "repo-file: %q is not mounted under assets/repo (see hugo.toml)" $name -}}

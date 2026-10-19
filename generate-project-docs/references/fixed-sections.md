@@ -2,9 +2,13 @@
 
 Append these to the README **in this order**, each only when its condition holds.
 
-The README is packed into the NuGet package and shown on nuget.org, where a relative link resolves to nothing. Links to
-`CHANGELOG.md` and `CONTRIBUTING.md` are therefore **absolute** GitHub URLs on `main`:
-`https://github.com/<owner>/<repo>/blob/main/<FILE>`.
+**Links to `CHANGELOG.md`, `CONTRIBUTING.md` and `LICENSE`** depend on the kind (`SKILL.md`, *Library or
+application*):
+
+- **Library** — **absolute** GitHub URLs on `main`, `https://github.com/<owner>/<repo>/blob/main/<FILE>`. The README
+  is packed into the package and shown on the registry (nuget.org, npm, PyPI, crates.io, pub.dev), where a relative
+  link resolves to nothing. The blocks below show this form.
+- **Application** — relative links, `./<FILE>`: the README is only read on GitHub and in clones.
 
 The README holds consumer content only. Building from source, testing, branching, versioning and releasing belong in
 `CONTRIBUTING.md` (see `references/repo-files.md`); release notes and upgrade guides belong in `CHANGELOG.md`. None of
@@ -12,7 +16,7 @@ them is repeated in the README.
 
 ## Upgrading — include only if CHANGELOG.md has an upgrade guide
 
-Placed after the usage sections, before Changelog. One line per `### Upgrading from <X>.x to <Y>.0` subsection in
+Placed after the usage (library) or deploy (application) sections, before Changelog. One line per `### Upgrading from <X>.x to <Y>.0` subsection in
 `CHANGELOG.md`, newest first. The anchor is GitHub's: lowercase, dots dropped, spaces to hyphens
 (`### Upgrading from 1.x to 2.0` → `#upgrading-from-1x-to-20`).
 
@@ -42,8 +46,8 @@ Building from source, running the tests, the branching model and the release pro
 
 ## Legal — include only if a license exists or was just created
 
-Adapt the block and the badge to the license the repository actually has. Links are absolute, like the
-Changelog and Contributing ones: the README is packed into the NuGet package, where a relative link is broken.
+Adapt the block and the badge to the license the repository actually has. Links follow the same rule as the
+Changelog and Contributing ones: absolute for a library, relative for an application.
 
 For the **Artur Rios Attribution License** (the default; its `LICENSE` starts with that title):
 

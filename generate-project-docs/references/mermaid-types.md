@@ -13,7 +13,9 @@ chosen types where they fit best in the README and docs pages. Use fenced ```mer
 | **Component / architecture (flowchart with subgraphs)** | High-level system layout | ` ```mermaid\nflowchart TB` + `subgraph` |
 
 For a library/SDK, a good default pair is **flowchart** (package dependencies, with `subgraph`) and
-**classDiagram** (core models and type hierarchies).
+**classDiagram** (core models and type hierarchies). For an application, **flowchart with subgraphs** (components,
+data store and integrations), **sequenceDiagram** (a request's path through the layers) and, with a database,
+**erDiagram**.
 
 ## Examples
 

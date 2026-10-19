@@ -9,7 +9,9 @@ tree under the docs section (ordered by `weight`), so pages are *not* listed one
 
 ## What the site holds — and what it never repeats
 
-The site is for **usage and reference**: overview, installation, usage, per-package pages, architecture, diagrams.
+The site is for **usage and reference**: for a library, overview, installation, usage, per-package pages,
+architecture, diagrams; for an application, getting started, configuration, architecture, the API reference and
+operations (§Application pages).
 Content whose home is the README, `CONTRIBUTING.md` or `CHANGELOG.md` is **not copied** into it:
 
 - No Testing, Build/test/publish, Branching and releases, Versioning or project-info pages — that is `CONTRIBUTING.md`.
@@ -21,8 +23,8 @@ Content whose home is the README, `CONTRIBUTING.md` or `CHANGELOG.md` is **not c
 ## If a site already exists
 
 If `docs/hugo.toml` (or `docs/config.toml`) exists, do NOT re-init. Only:
-- Add/update content pages under `docs/content/en/docs/` to match the chosen single/multi-page
-  structure, and their `weight` ordering.
+- Add/update content pages under `docs/content/en/docs/` to match the chosen structure (library pages or
+  §Application pages), and their `weight` ordering. Keep pages the site already has that hold real content.
 - Remove contributor and release material from site pages (list above) — check that it now lives in
   `CONTRIBUTING.md` / `CHANGELOG.md` first, and link the new Changelog/Contributing pages wherever a page linked the
   removed section.
@@ -36,14 +38,22 @@ If `docs/hugo.toml` (or `docs/config.toml`) exists, do NOT re-init. Only:
 
 ## Creating from scratch
 
-Run from the repo root. Docsy requires **Hugo Extended ≥ v0.146.0** and **Node.js ≥ 18** (its CSS is
-built with PostCSS/Autoprefixer).
+Run from the repo root. Docsy needs **Hugo Extended** at the version its release requires (the release notes of the
+`@docsy/theme` version you install; Docsy 0.17 and later need **v0.160.1 or newer**), **Dart Sass** on the `PATH`
+(0.17 and later compile their SCSS with it — the standalone Dart Sass: `choco install sass`, `brew install sass/sass/sass`,
+`sudo snap install dart-sass`, or the release archive from <https://github.com/sass/dart-sass/releases>; the npm `sass`
+package cannot serve Hugo), and **Node.js ≥ 18**. Check `hugo version` and `sass --version` before building, and
+list Hugo Extended, Dart Sass and Node.js under the docs site in CONTRIBUTING's Prerequisites.
 
 ### 1. Init the site
 
 ```bash
 hugo new site docs --format toml
 ```
+
+When `docs/` holds only a `.gitkeep` (a repository from **scaffold-project**), delete the `.gitkeep` first — or run
+with `--force` — since `hugo new site` refuses a non-empty directory. Anything else already in `docs/` is handled by
+`SKILL.md` step 6.
 
 ### 2. Install Docsy and its build dependencies with npm
 
@@ -62,23 +72,26 @@ Artur Rios Attribution License, the SPDX id such as `MIT` for a standard one):
     "serve": "hugo server"
   },
   "devDependencies": {
-    "@docsy/theme": "^0.16.0",
-    "autoprefixer": "^10.5.4",
-    "postcss": "^8.5.26",
-    "postcss-cli": "^11.0.1"
+    "@docsy/theme": "^0.18.0"
   }
 }
 ```
 
-Use the current releases: check `npm view @docsy/theme version` (and the same for the other three) and write those
-ranges. Then install, which writes `docs/package-lock.json`:
+Use the current release: check `npm view @docsy/theme version` and write that range. Docsy 0.17 and later run PostCSS
+only when the site has a `postcss.config.*`, so `autoprefixer`, `postcss` and `postcss-cli` are added only together
+with one — an older Docsy (0.16 and earlier, which an existing site may pin) still needs all three. Then install,
+which writes `docs/package-lock.json`:
 
 ```bash
-npm install --prefix docs
+(cd docs && npm install)
 ```
 
+(`npm install --prefix docs` fails on Windows with npm 10 — ENOENT on the root `package.json`; `npm ci --prefix docs`
+works everywhere.) If Dart Sass can't be installed where the site is built, pin `"@docsy/theme": "^0.16.0"` with the
+three PostCSS packages instead, and say so in the report.
+
 **Commit `docs/package-lock.json`** — CI installs with `npm ci`, which refuses to run without it. Ignore the rest of
-what the build produces; add to the root `.gitignore`:
+what the build produces; add to the root `.gitignore` the lines it doesn't already cover:
 
 ```
 node_modules/
@@ -91,12 +104,19 @@ node_modules/
 /docs/coverage-report/
 ```
 
-(The two coverage lines only when a coverage report is published.)
+(The coverage lines only when a coverage report is published, and `/coverage/` only for the stacks whose command writes
+there — .NET and Rust; Gradle and Maven already ignore `build/` / `target/`.)
+
+**Tools that scan the whole repository** pick up `docs/` once it holds a site: Tailwind CSS v4's automatic source
+detection adds Docsy's class names to the app's CSS, and a linter or type checker with no `include` may read
+`docs/node_modules`. For each such tool at the repository root, exclude `docs/` — for Tailwind v4, add
+`@source not "../docs";` (the path relative to the CSS file) next to its `@import "tailwindcss";` — and rebuild the
+app to confirm its output did not change.
 
 ### 3. Write `docs/hugo.toml`
 
 Fill `<owner>`, `<repo>`, `<Project Title>`, `<one-line project description>`, `<author-name>`, `<author-site-url>`.
-The `coverage-report` mount and the Test Coverage navbar item apply only when the solution publishes a coverage report
+The `coverage-report` mount and the Test Coverage navbar item apply only when the site publishes a coverage report
 into `docs/coverage-report` — omit both otherwise.
 
 ```toml
@@ -188,7 +208,7 @@ locale = 'en-us'
       enable = false
 
   [params.links]
-    # omit this whole block if the user has no site
+    # omit this [[params.links.user]] entry if the user has no site; keep the developer link
     [[params.links.user]]
       name = 'Author'
       url = '<author-site-url>'
@@ -263,7 +283,9 @@ linkTitle: Home
 {{% /blocks/lead %}}
 ```
 
-- `content/en/docs/_index.md` — the docs section root (overview, installation, usage, "where to next"):
+- `content/en/docs/_index.md` — the docs section root. For a library: overview, installation, usage, "where to
+  next". For an application, whose overview has its own page: one paragraph and a "where to next" list linking the
+  pages below — no second overview.
 
 ```
 ---
@@ -275,8 +297,8 @@ description: >-
 ---
 ```
 
-- One page per package/major component under `content/en/docs/` for multi-page docs (e.g.
-  `content/en/docs/architecture.md`), each:
+- One page per package/major component (library) or per topic (application, §Application pages) under
+  `content/en/docs/` (e.g. `content/en/docs/architecture.md`), each:
 
 ```
 ---
@@ -290,6 +312,52 @@ description: >-
 Sidebar order comes from `weight` (ascending, in steps of 10). The filename (minus `.md`) is the slug,
 so the page URL is `/docs/<slug>/`. Reuse and expand the README's usage content here — the docs can go deeper
 than the README.
+
+#### Application pages
+
+For an application, the docs section holds these pages — each only when the analysis has something true to put on
+it (`references/stacks.md`, *Application facts to read*):
+
+| Page (slug) | Weight | Holds |
+|---|---|---|
+| `overview` | 10 | What it does, for whom, the main capabilities, what it is built with. |
+| `getting-started` | 20 | From a clone to a running instance: prerequisites to *run* it (not to develop it), configuration to copy, the run command, the URL, a first request or screen. |
+| `configuration` | 30 | Every setting, from the real config: name, required or not, default, what it does; where each is read from (file, environment). Secrets are named, never valued. |
+| `architecture` | 40 | Components and layers, data store, integrations, the path of a request; the diagrams the user picked. |
+| `api` | 50 | A service's HTTP API — see below. |
+| `operations` | 60 | Deploying (images, compose, env files), migrations, health checks, logs, backups — whatever the repository supports. |
+
+**The API page.** When the repository commits an OpenAPI document, render it with Docsy's Swagger UI shortcode
+instead of describing endpoints by hand — mount the document into the site, like the root files:
+
+```toml
+  [[module.mounts]]
+    source = '../<path/to/openapi.json>'
+    target = 'static/openapi/<name>.json'
+```
+
+`content/en/docs/api.md`:
+
+```
+---
+title: API reference
+weight: 50
+type: swagger
+description: Every endpoint, generated from the OpenAPI document.
+---
+
+{{< swaggerui src="/<repo>/openapi/<name>.json" >}}
+```
+
+`type: swagger` selects the Docsy layout the shortcode needs. The shortcode passes `src` to Swagger UI as is, so it
+carries the repository path — the site is served from `https://<owner>.github.io/<repo>/` — and the build check in
+step 8 opens `docs/public/docs/api/index.html` to confirm the URL. Swagger UI loads from unpkg, so the page needs
+network access in the browser. Add the document's path to the workflow's `paths` so the page rebuilds when it
+changes. Without a committed document, the page lists the endpoints from the controllers / routes — method, path,
+what it does, the role it needs — and says where the running service serves its interactive docs (`/swagger`,
+`/docs`, springdoc's `/swagger-ui.html`); a spec the service only generates at run time is not a committed document.
+A service with no endpoints of its own — only framework ones such as Actuator's — gets no API page: its health and
+management endpoints go on the operations page.
 
 - **The Changelog and Contributing pages**, which render the root files. Give them weights above every other page so
   they sit last in the sidebar.
@@ -331,7 +399,7 @@ description: Building from source, running the tests, branching and releasing.
 {{- with resources.Get (path.Join "repo" $name) -}}
   {{- $text := replaceRE `^\x{FEFF}?# [^\n]*\n+` "" .Content -}}
   {{- $base := printf "%s/blob/%s/" site.Params.github_repo site.Params.github_branch -}}
-  {{- $text = replaceRE `\]\(\./([^)]+)\)` (printf "](%s$1)" $base) $text -}}
+  {{- $text = replaceRE `\]\((?:\./)?([^)/#:][^):]*)\)` (printf "](%s$1)" $base) $text -}}
   {{- $.Page.RenderString (dict "display" "block") $text -}}
 {{- else -}}
   {{- errorf "repo-file: %q is not mounted under assets/repo (see hugo.toml)" $name -}}
@@ -397,7 +465,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      # --- coverage report: only when one is published; drop these four steps otherwise ---
+      # --- coverage report: only when one is published; drop this block otherwise ---
+      # The stack's setup step(s) and coverage command, from references/stacks.md. For .NET:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v6
         with:
@@ -421,6 +490,10 @@ jobs:
             "-reports:coverage/**/coverage.cobertura.xml" \
             "-targetdir:docs/coverage-report" \
             "-reporttypes:Html"
+      # For another stack, e.g. Python:
+      #   - uses: astral-sh/setup-uv@v7
+      #   - run: uv run pytest --cov=<package> --cov-report=html:docs/coverage-report
+      # Whatever the stack, the report's index.html must end up in docs/coverage-report/.
       # --- end of coverage report ---
 
       - name: Setup Hugo
@@ -428,6 +501,10 @@ jobs:
         with:
           hugo-version: 'latest'
           extended: true
+
+      # Docsy 0.17+ compiles its SCSS with Dart Sass; Hugo finds it on the PATH.
+      - name: Setup Dart Sass
+        run: sudo snap install dart-sass
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -461,10 +538,12 @@ jobs:
         uses: actions/deploy-pages@v5
 ```
 
-Without a coverage report: name it "Build Docs", drop the marked steps, drop `src/**` / `tests/**` from `paths`, and
-change the workflow's own entry in `paths` to `.github/workflows/build-docs.yml` — the file's new name.
+With a coverage report, `paths` lists what the tests read — `src/**` and `tests/**` in the shared layout (the component
+folders otherwise), plus the build manifests (`*.sln`/`*.csproj`, `package.json`, `pyproject.toml`, `Cargo.toml` and
+`Cargo.lock`, …) when they sit outside those folders. Without one: name it "Build Docs", drop the marked block, drop those folders from
+`paths`, and change the workflow's own entry in `paths` to `.github/workflows/build-docs.yml` — the file's new name.
 
-If the user holds a ReportGenerator PRO license, the author's libraries pin the tool
+(.NET only) If the user holds a ReportGenerator PRO license, the author's libraries pin the tool
 (`--version "$REPORTGENERATOR_VERSION"`, set under `env:`) and pass `"-license:$REPORTGENERATOR_LICENSE"` from a
 `REPORTGENERATOR_LICENSE` secret; add both only when the user says they have one.
 

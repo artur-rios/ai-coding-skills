@@ -17,7 +17,7 @@ It replaces the earlier `scaffold-dotnet-project` and `scaffold-dotnet-web-api` 
 - For a **NuGet library**, asks for the package metadata nuget.org needs (package id, version, authors,
   tags, target frameworks, project URL, icon) and writes it into the csproj together with Source Link,
   symbol packages and XML docs; then offers to run **create-nuget-publish-workflow** and
-  **generate-nuget-lib-docs**.
+  **generate-project-docs**.
 - Collects **every** answer in one round before creating anything, then runs the stack's own
   generator (`dotnet new`, start.spring.io, `uv init`, `npm create vite`, `ng new`, `cargo init`,
   `flutter create`).

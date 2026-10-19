@@ -18,7 +18,7 @@ A project counts as **packable** when it opts in — an explicit `<PackageId>`,
 — and isn't excluded as an `<IsPackable>false</IsPackable>` project, a test project,
 or an executable without a package id. So a repo with one library plus several test
 projects is still *single-package*. The same rule lives verbatim in
-[generate-nuget-lib-docs](generate-nuget-lib-docs.md), so the two skills never
+[generate-project-docs](generate-project-docs.md) (its .NET section), so the two skills never
 disagree about what a repository ships.
 
 The **multi-package** strategy additionally needs an explicit `<PackageId>` per

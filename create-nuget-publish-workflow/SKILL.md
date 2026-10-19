@@ -43,7 +43,7 @@ Skip / adapt if the repo publishes somewhere other than NuGet/GitHub Packages.
 
 ## What Counts as a Packable Project
 
-*(This rule is shared verbatim with `generate-nuget-lib-docs` so the two skills
+*(This rule is shared verbatim with `generate-project-docs` so the two skills
 never disagree about what a repository ships. Change it in both or neither.)*
 
 A `.csproj` ships a NuGet package when it **opts in** and is **not excluded**:
@@ -160,7 +160,7 @@ tag/push it and the workflow won't publish it.
 The release steps the workflow enforces belong in the repository's
 `CONTRIBUTING.md` `## Releasing` section. If the file exists, make that section say
 what the workflow now requires; if it does not, leave it and mention it in the report
-(`generate-nuget-lib-docs` writes one).
+(`generate-project-docs` writes one).
 
 - **Single-package:** cut `release/<version>` from `develop`, set `<Version>`,
   finalize `CHANGELOG.md` (`## [Unreleased]` → `## [<version>] - <yyyy-mm-dd>`),

@@ -27,7 +27,7 @@ Two conventions carry across skills:
 
 - **Preconditions are checked, not assumed.** A skill scoped to a situation says so
   in its `description` and verifies it in step 1, then stops rather than
-  improvising. `generate-nuget-lib-docs` and `create-nuget-publish-workflow` share
+  improvising. `generate-project-docs` and `create-nuget-publish-workflow` share
   their packable-project rule **verbatim** so they can never disagree about what a
   repository ships.
 - **Skills defer to the project.** Where a repository documents its own convention —

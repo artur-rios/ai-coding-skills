@@ -22,7 +22,7 @@ hand, you just describe what you want.
 |---|---|---|
 | **create-unit-tests** | Generates a thorough unit-test suite for a target project, using Given-When-Then test names, carrying the project's test category, and covering happy paths plus edge cases. | [docs/create-unit-tests.md](docs/create-unit-tests.md) |
 | **create-nuget-publish-workflow** | Generates a tag-triggered GitHub Actions workflow that publishes a .NET library's NuGet package(s) to nuget.org and GitHub Packages, only from tags on `main` that match the csproj version. Requires a repo that actually ships a package. | [docs/create-nuget-publish-workflow.md](docs/create-nuget-publish-workflow.md) |
-| **generate-nuget-lib-docs** | Generates a consumer-facing README (package table, NuGet badges, install commands), a CHANGELOG.md and a CONTRIBUTING.md, plus a Hugo docs site (Docsy theme) that renders those two files, deployed to GitHub Pages via CI, for a .NET library published as NuGet packages. | [docs/generate-nuget-lib-docs.md](docs/generate-nuget-lib-docs.md) |
+| **generate-project-docs** | Documents an existing project in any stack — a library published as packages (NuGet, npm, PyPI, crates.io, Maven Central, pub.dev, Go) or an application (API, web app, CLI) — with a README for its users, a CHANGELOG.md and a CONTRIBUTING.md, plus a Hugo docs site (Docsy theme) that renders those two files, with an optional test coverage report, deployed to GitHub Pages via CI. | [docs/generate-project-docs.md](docs/generate-project-docs.md) |
 | **scaffold-project** | Bootstraps a new repository in any stack — .NET (layered DDD + CQRS web API, minimal web API, NuGet library with its package metadata, any `dotnet new` template), Spring Boot, Python, Node.js / TypeScript, React with shadcn/ui, Angular with spartan/ui, Rust, Flutter — all on one shape: `src/`, `tests/`, `docs/`, README, CHANGELOG, CONTRIBUTING, LICENSE, `.wakatime-project` and the develop / release branch policy, verified with a build and the tests. | [docs/scaffold-project.md](docs/scaffold-project.md) |
 | **commit-staged-changes** | Commits the already-staged files with a lowercase Conventional Commits message that follows the 50/72 rule. | [docs/commit-staged-changes.md](docs/commit-staged-changes.md) |
 | **generate-specs-from-brainstorm** | Expands a `Brainstorm.md` into fourteen project documents — an informal `initial/` set, a formal `requirements/` set, and a README, CHANGELOG and CONTRIBUTING — then derives GitHub milestones and issues from the use cases, pausing for review at each hand-off. | [docs/generate-specs-from-brainstorm.md](docs/generate-specs-from-brainstorm.md) |
@@ -43,7 +43,7 @@ and what files it contains.
 ├── docs/                              # Per-skill documentation (linked above)
 │   ├── create-unit-tests.md
 │   ├── create-nuget-publish-workflow.md
-│   ├── generate-nuget-lib-docs.md
+│   ├── generate-project-docs.md
 │   ├── generate-specs-from-brainstorm.md
 │   ├── implement-use-case.md
 │   ├── implement-use-cases-batch.md
@@ -55,7 +55,7 @@ and what files it contains.
 ├── create-nuget-publish-workflow/
 │   ├── SKILL.md
 │   └── templates/
-├── generate-nuget-lib-docs/
+├── generate-project-docs/
 │   ├── SKILL.md
 │   └── references/
 ├── generate-specs-from-brainstorm/
@@ -110,13 +110,13 @@ in [CONTRIBUTING.md](./CONTRIBUTING.md#syncing-the-skills-to-your-agents).
 Copy its folder into the agent's skill folder, for example:
 
 ```bash
-mkdir -p ~/.claude/skills && cp -r generate-nuget-lib-docs ~/.claude/skills/
-mkdir -p ~/.agents/skills && cp -r generate-nuget-lib-docs ~/.agents/skills/
-mkdir -p ~/.config/opencode/skills && cp -r generate-nuget-lib-docs ~/.config/opencode/skills/
+mkdir -p ~/.claude/skills && cp -r generate-project-docs ~/.claude/skills/
+mkdir -p ~/.agents/skills && cp -r generate-project-docs ~/.agents/skills/
+mkdir -p ~/.config/opencode/skills && cp -r generate-project-docs ~/.config/opencode/skills/
 ```
 
-Then ask something like *"generate docs for this project"* from a NuGet library repository and the
-skill is invoked automatically. In Claude Code, `/skills` confirms it loaded.
+Then ask something like *"generate docs for this project"* from a repository and the skill is invoked
+automatically. In Claude Code, `/skills` confirms it loaded.
 
 ## Changelog
 

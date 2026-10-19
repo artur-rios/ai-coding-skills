@@ -36,9 +36,8 @@ Brainstorm.md", "create the requirements documents for this project", "expand
 these notes into a vision and requirements doc", or "break the specs into
 milestones and issues".
 
-It is **not** for documenting existing code — for a README and a docs site for a
-.NET/NuGet library, use
-[generate-nuget-lib-docs](generate-nuget-lib-docs.md). This skill writes documents
+It is **not** for documenting existing code — for a README and a docs site, use
+[generate-project-docs](generate-project-docs.md). This skill writes documents
 and a backlog only; it writes no code. To implement one of the issues it creates,
 use [implement-use-case](implement-use-case.md).
 
