@@ -3,8 +3,8 @@
 [![License: Attribution](https://img.shields.io/badge/License-Attribution-blue.svg)](./LICENSE)
 
 A collection of reusable **agent skills** for AI coding assistants such as
-[Claude Code](https://docs.claude.com/en/docs/claude-code) and
-[opencode](https://opencode.ai). Each skill packages a focused, repeatable
+[Claude Code](https://docs.claude.com/en/docs/claude-code),
+[Codex](https://developers.openai.com/codex) and [opencode](https://opencode.ai). Each skill packages a focused, repeatable
 workflow — instructions, templates, and reference material — that the agent loads
 on demand when your request matches the skill's purpose.
 
@@ -78,53 +78,45 @@ and what files it contains.
 
 ## Using these skills
 
-Skills are discovered by scanning known **skill directories**. To install one,
-copy its folder (the directory containing `SKILL.md`) into the appropriate
-location for your agent, then start a session and describe your task — the agent
-picks the matching skill from its `description`.
+Skills are discovered by scanning known **skill directories**. Each agent has its own, and each
+skill is its whole folder — the directory containing `SKILL.md` — because the templates and reference
+files are loaded relative to it. Once a skill is in place, start a session and describe your task; the
+agent picks the matching skill from its `description`.
 
-### Claude Code
+| Agent | Personal folder (all your projects) | Project folder (shared via a repo) |
+|---|---|---|
+| [Claude Code](https://docs.claude.com/en/docs/claude-code) | `~/.claude/skills/` | `.claude/skills/` |
+| [Codex](https://developers.openai.com/codex) | `~/.agents/skills/` (older releases: `~/.codex/skills/`) | `.agents/skills/` |
+| [opencode](https://opencode.ai) | `~/.config/opencode/skills/` | `.opencode/skills/` |
 
-Claude Code loads skills from `.claude/skills/`. Use the project location to
-share a skill with a repo, or the personal location to make it available
-everywhere.
+On Windows, `~` is `%USERPROFILE%`. opencode also reads the Claude Code and `.agents` folders, so a
+skill installed for Claude Code or Codex is already visible to it.
 
-- **Project (shared via the repo):** `.claude/skills/<skill-name>/SKILL.md`
-- **Personal (all your projects):** `~/.claude/skills/<skill-name>/SKILL.md`
-  (on Windows: `%USERPROFILE%\.claude\skills\<skill-name>\SKILL.md`)
+### Install every skill with `sync-skills.ps1`
 
-For example, to install `generate-nuget-lib-docs` personally:
+The repository mirrors itself into those folders:
 
-```bash
-mkdir -p ~/.claude/skills
-cp -r generate-nuget-lib-docs ~/.claude/skills/
-```
+1. Copy `.env.example` to `.env` and uncomment the paths of the agents you use.
+2. Run `./sync-skills.ps1` (on Linux and macOS: `pwsh ./sync-skills.ps1`).
 
-Then in any Claude Code session, ask something like *"generate docs for this
-project"* from a NuGet library repo and the skill is invoked automatically. You can also confirm it loaded
-with `/skills`.
+Each run copies every skill, replacing the previous copy, and **removes the skills this repository no
+longer ships** — renamed or merged ones — so they stop competing for the same requests. It only ever
+removes skills this repository installed; anything else in those folders is left alone.
+`-WhatIf` shows what would change; `-Target CLAUDE_SKILLS` limits the run to one agent. Details are
+in [CONTRIBUTING.md](./CONTRIBUTING.md#syncing-the-skills-to-your-agents).
 
-### opencode
+### Install one skill by hand
 
-opencode is compatible with the same `SKILL.md` format and discovers skills from
-its own skill directories:
-
-- **Project (shared via the repo):** `.opencode/skill/<skill-name>/SKILL.md`
-- **Global (all your projects):** `~/.config/opencode/skill/<skill-name>/SKILL.md`
-
-For example, to install `create-nuget-publish-workflow` globally:
+Copy its folder into the agent's skill folder, for example:
 
 ```bash
-mkdir -p ~/.config/opencode/skill
-cp -r create-nuget-publish-workflow ~/.config/opencode/skill/
+mkdir -p ~/.claude/skills && cp -r generate-nuget-lib-docs ~/.claude/skills/
+mkdir -p ~/.agents/skills && cp -r generate-nuget-lib-docs ~/.agents/skills/
+mkdir -p ~/.config/opencode/skills && cp -r generate-nuget-lib-docs ~/.config/opencode/skills/
 ```
 
-Then start opencode and describe the task (e.g. *"add a workflow to publish this
-package to NuGet"*); opencode loads the matching skill from its description.
-
-> **Note:** both agents match skills by the `description` field in each
-> `SKILL.md`, so keep the folder's contents intact when copying — the templates
-> and reference files are loaded relative to `SKILL.md`.
+Then ask something like *"generate docs for this project"* from a NuGet library repository and the
+skill is invoked automatically. In Claude Code, `/skills` confirms it loaded.
 
 ## Changelog
 

@@ -70,12 +70,17 @@ instead of copying them, and the `develop` / `release/<version>` / `main` branch
   methods, waits for the Branch Policy check, merges only into the integration branch and leaves releases to the owner.
 - `create-unit-tests` marks new test classes with the project's category (`[Trait("Category", "Unit")]` or its own
   marker) when CI runs unit and functional tests as separate filtered jobs.
+- `sync-skills.ps1` also removes the skills this repository no longer ships from each target folder — only skills it
+  installed (listed in the `.ai-coding-skills.manifest` it now writes there, or found in the repository's git
+  history), never anything else in the folder — and syncs to opencode (`OPENCODE_SKILLS`,
+  `~/.config/opencode/skills`) as well as Claude Code and Codex. `.env.example` points Codex at `~/.agents/skills`,
+  the folder current releases read. The README lists the three agents' skill folders.
 
 ### Removed
 
 - `scaffold-dotnet-project` and `scaffold-dotnet-web-api`, merged into `scaffold-project` — the generic `dotnet new`
-  scaffold and the layered web API are two of its .NET paths. `sync-skills.ps1` only replaces the skills it finds, so
-  delete the two old folders from your agents' skill directories by hand, or they keep competing for the same requests.
+  scaffold and the layered web API are two of its .NET paths. The next `sync-skills.ps1` run removes the two old
+  folders from your agents' skill directories.
 
 ### Fixed
 
