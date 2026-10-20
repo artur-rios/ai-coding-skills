@@ -7,7 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-No release has been tagged yet. So far the repository holds:
+## [1.0.0] - 2026-10-19
+
+The first release. It holds:
 
 ### Added
 
@@ -122,4 +124,5 @@ instead of copying them, and the `develop` / `release/<version>` / `main` branch
 - `implement-use-case` and `implement-use-cases-batch` find the workflow documents with a `find` that really skips
   `node_modules` and `.git`.
 
-[Unreleased]: https://github.com/artur-rios/ai-coding-skills/commits/develop
+[Unreleased]: https://github.com/artur-rios/ai-coding-skills/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/artur-rios/ai-coding-skills/releases/tag/v1.0.0
