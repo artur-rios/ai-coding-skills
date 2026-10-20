@@ -27,7 +27,7 @@ Two conventions carry across skills:
 
 - **Preconditions are checked, not assumed.** A skill scoped to a situation says so
   in its `description` and verifies it in step 1, then stops rather than
-  improvising. `generate-nuget-lib-docs` and `create-nuget-publish-workflow` share
+  improvising. `generate-project-docs` and `create-nuget-publish-workflow` share
   their packable-project rule **verbatim** so they can never disagree about what a
   repository ships.
 - **Skills defer to the project.** Where a repository documents its own convention —
@@ -55,21 +55,33 @@ When editing a skill, keep its docs page and its README row in step with it.
 
 ## Syncing the skills to your agents
 
-`sync-skills.ps1` copies every skill in this repository (any top-level directory containing `SKILL.md`) to the skill
-folders of your agents, replacing each skill's previous copy there. Everything else in the repository is ignored.
+`sync-skills.ps1` mirrors every skill in this repository (any top-level directory containing `SKILL.md`) into the
+skill folders of your agents. Everything else in the repository is ignored.
 
-1. Copy `.env.example` to `.env` and uncomment the pair of paths for your platform (absolute paths on Linux and
-   macOS). `.env` is git-ignored; never commit it. Both pairs are commented out on purpose: an unedited copy makes the
-   sync skip every target instead of writing to a bogus path.
+1. Copy `.env.example` to `.env` and uncomment the paths for your platform and the agents you use —
+   `CLAUDE_SKILLS` (Claude Code, `~/.claude/skills`), `CODEX_SKILLS` (Codex, `~/.agents/skills`) and
+   `OPENCODE_SKILLS` (opencode, `~/.config/opencode/skills`); absolute paths on Linux and macOS. `.env` is
+   git-ignored; never commit it. Every line is commented out on purpose: an unedited copy makes the sync skip every
+   target instead of writing to a bogus path, and an unset target is skipped with a warning.
 2. Run it:
 
    ```bash
    ./sync-skills.ps1                         # every target in .env
    ./sync-skills.ps1 -Target CODEX_SKILLS    # only the named targets
-   ./sync-skills.ps1 -WhatIf                 # show what would be copied
+   ./sync-skills.ps1 -WhatIf                 # show what would be copied and removed
    ```
 
    On Linux and macOS, run it with PowerShell 7: `pwsh ./sync-skills.ps1`.
+
+For each target, the script copies every skill (replacing its previous copy), then removes the skills this
+repository **no longer ships** — a renamed or merged skill would otherwise keep competing with its replacement for the
+same requests — and finally writes `.ai-coding-skills.manifest` there, listing what it installed. A skill is removed
+only if this repository shipped it: its name is in that manifest, or it appears in this repository's git history
+(which covers copies synced before the manifest existed), and its folder still holds a `SKILL.md`. Skills from any
+other source in the same folder are never touched.
+
+The sync mirrors the **checked-out branch**: run it from an up-to-date `main` to install the released skills, or from
+a feature branch to try that branch's skills out, and run it from `main` again afterwards.
 
 ## Branching and pull requests
 
@@ -84,7 +96,7 @@ Pull requests into `develop` and `main` must pass the branch policy check
 merge commits only.
 
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/) with a lowercase subject, e.g.
-`feat: add scaffold-dotnet-web-api skill` or `fix: scope skills and align them on one pattern`. The
+`feat: add scaffold-project skill` or `fix: scope skills and align them on one pattern`. The
 `commit-staged-changes` skill in this repository writes them.
 
 Record every change a user of the skills would notice under `## [Unreleased]` in [CHANGELOG.md](./CHANGELOG.md), in the

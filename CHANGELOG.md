@@ -11,8 +11,19 @@ No release has been tagged yet. So far the repository holds:
 
 ### Added
 
-- Skills for .NET work: `create-unit-tests`, `create-nuget-publish-workflow`, `generate-nuget-lib-docs` (README plus a
-  Hugo docs site on the Docsy theme), `scaffold-dotnet-project` and `scaffold-dotnet-web-api`.
+- Skills for .NET work: `create-unit-tests` and `create-nuget-publish-workflow`.
+- `generate-project-docs`, which documents an existing project in any stack — a library published as packages
+  (NuGet, npm, PyPI, crates.io, Maven Central, pub.dev, Go modules) or an application (API, web app, CLI, worker,
+  mobile app) — with a README for its users (a package table, registry badges and install commands for a library;
+  configure, run and deploy for an application), a CHANGELOG.md and a CONTRIBUTING.md, plus a Hugo docs site on the
+  Docsy theme that renders those two files, with application pages (Swagger UI over a committed OpenAPI document) and
+  an optional test coverage report, deployed to GitHub Pages.
+- `scaffold-project`, which bootstraps a new repository in any stack — .NET (the layered DDD + CQRS web API, a minimal
+  web API, a NuGet library, any `dotnet new` template), Spring Boot, Python, Node.js / TypeScript, React with
+  shadcn/ui, Angular with spartan/ui, Rust, Flutter, or another one through a generic path. It asks for the technology
+  and the project kind only when the request doesn't name them, asks a NuGet library's package metadata and writes it
+  into the csproj, and lands every stack on one shape: `src/`, `tests/`, `docs/`, README, CHANGELOG, CONTRIBUTING,
+  LICENSE, `.wakatime-project`, `.editorconfig`, `.gitattributes`, `.gitignore` and the branch policy.
 - `commit-staged-changes`, which commits the staged files with a lowercase Conventional Commits message.
 - A specs-to-delivery chain: `generate-specs-from-brainstorm` (project documents, README backlog, GitHub milestones and
   issues), `implement-use-case` (one use case to a review-ready pull request, with approval gates) and
@@ -62,8 +73,24 @@ instead of copying them, and the `develop` / `release/<version>` / `main` branch
   update, and never create a CHANGELOG or touch released sections.
 - `implement-use-cases-batch` checks rulesets as well as branch protection for a required review and the allowed merge
   methods, waits for the Branch Policy check, merges only into the integration branch and leaves releases to the owner.
+- `create-unit-tests` works in any stack and kind of project: a per-stack reference covers framework detection, where
+  tests go (`tests/` in a scaffold-project repository), the Given-When-Then spelling per language, unit markers and
+  their CI filters, mocks, data-driven tests and run commands, and the edge-case taxonomy adds async / time and what
+  UI components, HTTP handlers, CLIs and data access add.
 - `create-unit-tests` marks new test classes with the project's category (`[Trait("Category", "Unit")]` or its own
   marker) when CI runs unit and functional tests as separate filtered jobs.
+- `sync-skills.ps1` also removes the skills this repository no longer ships from each target folder — only skills it
+  installed (listed in the `.ai-coding-skills.manifest` it now writes there, or found in the repository's git
+  history), never anything else in the folder — and syncs to opencode (`OPENCODE_SKILLS`,
+  `~/.config/opencode/skills`) as well as Claude Code and Codex. `.env.example` points Codex at `~/.agents/skills`,
+  the folder current releases read. The README lists the three agents' skill folders.
+
+### Removed
+
+- `generate-nuget-lib-docs`, generalized into `generate-project-docs`; a .NET library is documented as before.
+- `scaffold-dotnet-project` and `scaffold-dotnet-web-api`, merged into `scaffold-project` — the generic `dotnet new`
+  scaffold and the layered web API are two of its .NET paths. The next `sync-skills.ps1` run removes the two old
+  folders from your agents' skill directories.
 
 ### Fixed
 

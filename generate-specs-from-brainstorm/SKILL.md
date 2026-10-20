@@ -1,6 +1,6 @@
 ---
 name: generate-specs-from-brainstorm
-description: Use when the user has a Brainstorm.md (or similar free-form idea notes) for a software project and wants it expanded into structured project documentation and a starting backlog — an `initial/` folder (Brainstorm, Project Overview, Technology Stack, Workflow, Business Rules), a formal `requirements/` folder (Vision, System Requirements, Use Case Specification, Development Workflow, Operations & Infrastructure, Technology Stack, Testing Specification), then a root README, CHANGELOG and CONTRIBUTING and GitHub milestones and issues derived from the use cases. Triggers on "turn my brainstorm into docs", "generate specs from Brainstorm.md", "create the requirements documents for this project", "expand these notes into a vision and requirements doc", "break the specs into milestones and issues". Not for README/docs-site generation of an existing codebase — that is generate-nuget-lib-docs.
+description: Use when the user has a Brainstorm.md (or similar free-form idea notes) for a software project and wants it expanded into structured project documentation and a starting backlog — an `initial/` folder (Brainstorm, Project Overview, Technology Stack, Workflow, Business Rules), a formal `requirements/` folder (Vision, System Requirements, Use Case Specification, Development Workflow, Operations & Infrastructure, Technology Stack, Testing Specification), then a root README, CHANGELOG and CONTRIBUTING and GitHub milestones and issues derived from the use cases. Triggers on "turn my brainstorm into docs", "generate specs from Brainstorm.md", "create the requirements documents for this project", "expand these notes into a vision and requirements doc", "break the specs into milestones and issues". Not for README/docs-site generation of an existing codebase — that is generate-project-docs.
 ---
 
 # Generate Specs from Brainstorm
@@ -38,8 +38,8 @@ the user approves the plan.
   and issues — and a README that tracks them.
 
 Skip / adapt if:
-- The user wants a README or a documentation site for **existing code** — for a
-  .NET/NuGet library that is `generate-nuget-lib-docs`.
+- The user wants a README or a documentation site for **existing code** — that is
+  `generate-project-docs`.
 - The user wants to implement something. Specs come first, but this skill stops
   at documents and the backlog; it writes no code. Implementing one of the issues
   it creates is `implement-use-case`.
