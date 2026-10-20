@@ -1,6 +1,6 @@
 ---
 name: implement-use-case
-description: Use when the user wants to implement, build, or start a use case identified by number or name (e.g. "implement UC-03", "start UC-11", "let's do use case 7", "begin the create scope use case"). Drives one use case from backlog to a review-ready pull request by following the project's own workflow documents — loading the specs, refining a design and plan, branching, implementing every flow, testing until green, marking the use case done in the README backlog when the README tracks one, and preparing the PR — pausing for human approval at every stage boundary. Invoke whenever a message names a use case in an implementation context, even if the word "skill" is never used. Requires the project to have workflow and use case specification documents; stops and says so if they are missing.
+description: Use when the user wants to implement, build, or start a use case identified by number or name (e.g. "implement UC-03", "start UC-11", "let's do use case 7", "begin the create scope use case"). Drives one use case from backlog to a review-ready pull request by following the project's own workflow documents — loading the specs, refining a design and plan, branching, implementing every flow, testing until green, marking the use case done in the README backlog when the README tracks one, recording it under Unreleased in CHANGELOG.md, and preparing the PR into the integration branch (develop where the repository enforces that model) — pausing for human approval at every stage boundary. Invoke whenever a message names a use case in an implementation context, even if the word "skill" is never used. Requires the project to have workflow and use case specification documents; stops and says so if they are missing.
 ---
 
 # Implement a Use Case
@@ -14,7 +14,10 @@ skill.
 **Core principle:** the documents own the steps; this skill owns the gates. Every
 branch pattern, status transition, test command, and Definition of Done comes from
 the project's `Development Workflow Document` and `Workflow.md`, read at invocation
-time. This skill contributes what a document cannot: it gets loaded when you ask,
+time — with one override: where the repository *enforces* a branching model
+(`CONTRIBUTING.md`, a Branch Policy check, a `develop` branch, rulesets), that model
+sets the base branch, because a pull request the check rejects cannot merge. This
+skill contributes what a document cannot: it gets loaded when you ask,
 it stops the work at every review boundary, and it refuses to advance on its own
 judgment.
 
@@ -55,6 +58,17 @@ Skip / adapt if:
   the branch are always the human's.
 - "No workflow doc, but the repo clearly uses `feature/*` branches" → NO. Inferred
   process is guessed process. Stop and ask.
+- "The workflow doc says branch from `main`, so I'll target `main`" → NO, not when
+  the repository enforces a `develop` flow. `main` takes only `release/*` pull
+  requests; branch from `develop`, target `develop`, and report the stale document
+  at Gate 1.
+- "I'll fix the stale workflow document while I'm here" → NO. Report it. A
+  document fix is its own pull request, not part of this use case's.
+- "The CHANGELOG is the owner's job at release time" → NO. The owner *finalizes*
+  `## [Unreleased]` at release time; each change records itself there, in its own
+  pull request.
+- "There's no CHANGELOG, I'll start one" → NO. Say so at Gate 3. Starting a
+  changelog is a project decision.
 - "The README has no backlog, I'll add one while I'm here" → NO. Update tracking
   that exists; do not introduce it.
 - "The README row is done, I'll also tidy the other stale rows" → NO. One use
@@ -67,6 +81,8 @@ Skip / adapt if:
 | "The user is clearly in a hurry" | Then they can say so and skip a gate explicitly. You do not decide that for them. |
 | "This alternative flow is unrealistic, it's not worth implementing" | It is in the specification. Implement it, or raise it at Gate 1 and let the user drop it. |
 | "The spec cites FR-OR-14 which doesn't exist — probably a typo for FR-OR-04" | Probably. Ask. Guessing at a requirement is how the wrong thing gets built correctly. |
+| "The document is the source of truth, so its base branch wins" | The documents own the process; the Branch Policy check owns what can merge. A pull request it rejects is not a deliverable. |
+| "The changelog entry can describe the handlers I added" | The changelog is read by API clients, operators, and users. Say what they can now do. |
 
 ## Procedure
 
@@ -100,9 +116,17 @@ contradiction and ask which is right.
 
 Pull the branch pattern, base branch, status lifecycle, unattended transition,
 issue tracker, test commands, and Definition of Done from the documents, per
-`doc-discovery.md` §4. Check there too whether the repository's `README.md`
-tracks issues — a roadmap or backlog table — and note the exact row for this use
-case and the marker the file uses for done work.
+`doc-discovery.md` §4. Then check whether the repository **enforces** a branching
+model (`doc-discovery.md` §3) — a branching section in `CONTRIBUTING.md`,
+`.github/workflows/branch-policy.yml`, a `develop` branch on the remote, rulesets.
+Where it does, it sets the base branch (usually `develop`) and the accepted
+prefixes (`feature/`, or `fix/` for a fix); a document that still says `main` is
+stale — note it for Gate 1.
+
+Check too whether the repository's `README.md` tracks issues — a roadmap or
+backlog table — and note the exact row for this use case and the marker the file
+uses for done work; and whether a `CHANGELOG.md` with a `## [Unreleased]` section
+exists (`changelog-entry.md` §1).
 
 Report what you found and where. A misread parameter is cheapest to fix now.
 
@@ -135,12 +159,19 @@ If design and planning skills are available in this session (for example
 `superpowers:brainstorming` and `superpowers:writing-plans`), use them. Otherwise
 produce the design and plan directly.
 
-**Stop at [Gate 1](references/gate-protocol.md).** No code before approval.
+**Stop at [Gate 1](references/gate-protocol.md).** No code before approval. Raise
+any stale workflow document found in step 3 here, with the base branch you will
+use instead.
 
 ### 6. Branch and mark the work started
 
 Once the plan is approved, create the branch from an up-to-date base branch using
-the pattern extracted in step 3.
+the pattern extracted in step 3 — in a repository with the `develop` flow:
+
+```bash
+git switch develop && git pull
+git switch -c feature/uc-##-use-case-name
+```
 
 Then make the **one** status change permitted without asking: move the issue to
 whichever status the documents define as "work has begun".
@@ -175,23 +206,29 @@ it in this session and read the result.
 
 Stop and ask.
 
-### 11. Mark the use case done in the README — only if the README tracks issues
+### 11. Record the use case — README backlog and CHANGELOG
 
-On Gate 3 approval, and **before** opening the pull request, update the
-repository's `README.md` tracking so the merge carries the status change with the
-implementation, per [references/readme-tracking.md](references/readme-tracking.md).
+On Gate 3 approval, and **before** opening the pull request, record the use case in
+the two places the repository keeps for it, so the merge carries them with the
+implementation:
 
-If the README has no issue tracking, skip this step silently. Do not add tracking
-to a README that does not have it — that is a different piece of work, and not one
-you were asked to do.
+- **README backlog** — only if the README tracks issues: mark this use case's row
+  done, per [references/readme-tracking.md](references/readme-tracking.md). If the
+  README has no issue tracking, skip this silently. Do not add tracking to a README
+  that does not have it — that is a different piece of work, and not one you were
+  asked to do.
+- **CHANGELOG** — only if `CHANGELOG.md` exists: add an entry under
+  `## [Unreleased]`, per [references/changelog-entry.md](references/changelog-entry.md).
+  If there is no `CHANGELOG.md`, you said so at Gate 3; do not create one.
 
-Commit the README change on the same branch. It lands on the base branch only when
-the pull request merges, which is the same moment the issue actually closes.
+Commit both on the same branch. They land on the base branch only when the pull
+request merges, which is the same moment the issue actually closes.
 
 ### 12. Open the pull request
 
-Push the branch and open a pull request into the base branch, following the
-project's description convention so the merge closes the issue.
+Push the branch and open a pull request into the base branch — `develop` where the
+repository enforces that model, never `main` — following the project's description
+convention so the merge closes the issue.
 
 Then hand off. **Do not review, approve, merge, or delete the branch.**
 
@@ -200,9 +237,9 @@ Then hand off. **Do not review, approve, merge, or delete the branch.**
 When the user confirms the merge and branch deletion, ask before closing out, then
 move the issue to done and confirm it is closed.
 
-Confirm the README tracking landed with the merge. If it did not — the step was
-skipped, or the row was edited on the base branch meanwhile — say so and ask
-before changing the README outside a pull request.
+Confirm the README tracking and the CHANGELOG entry landed with the merge. If they
+did not — the step was skipped, or the file was edited on the base branch
+meanwhile — say so and ask before changing either outside a pull request.
 
 ### 14. Verify the Definition of Done
 
@@ -216,7 +253,7 @@ evidence. Report any item that does not hold.
 |---|---|---|
 | 1 | Design and plan written | Any code being written |
 | 2 | Implementation complete | Moving to the testing stage |
-| 3 | Full suite green | The README tracking update and the pull request |
+| 3 | Full suite green | The README tracking update, the CHANGELOG entry, and the pull request |
 | 4 | Human merged and deleted the branch | Closing the issue |
 
 **The only unattended transition** is marking the work started, right after the
@@ -227,12 +264,14 @@ branch is created.
 | Where a thing comes from | Document |
 |---|---|
 | Branch pattern, status lifecycle, Definition of Done | Development Workflow Document |
+| Base branch and accepted prefixes, when enforced | `CONTRIBUTING.md`, `.github/workflows/branch-policy.yml`, rulesets — they override a stale document |
 | Step-by-step flow and pause points | `initial/Workflow.md` |
 | Actors, flows, `AF-xx` | Use Case Specification Document |
 | `FR-xx`, data model, authorization | System Requirements Document |
 | Test structure, naming, coverage | Testing Specification Document |
 | Libraries and versions | Technology Stack Document |
 | Whether the backlog is mirrored in the README, and how done is marked | The repository's `README.md` |
+| Whether changes are recorded, and for which reader | The repository's `CHANGELOG.md` and `CONTRIBUTING.md` |
 
 ## Common Mistakes
 
@@ -254,5 +293,14 @@ branch is created.
   the README disagreeing is how a backlog stops being trusted.
 - **Adding backlog tracking to a README that has none**, or restructuring the
   tables of one that does.
-- **Committing the README update straight to the base branch.** It belongs on the
-  use case's branch, inside the pull request.
+- **Committing the README update or the CHANGELOG entry straight to the base
+  branch.** Both belong on the use case's branch, inside the pull request.
+- **Targeting `main`** in a repository with a `develop` flow. `main` only takes
+  `release/*` pull requests; the Branch Policy check rejects anything else.
+- **Following a stale workflow document's base branch** over the enforced model —
+  or silently fixing that document in the use case's pull request. Report it at
+  Gate 1.
+- **Writing the changelog entry for the reviewer** — handler and test names —
+  instead of for the API client, operator, or user who reads the changelog.
+- **Editing a released CHANGELOG section** or the compare links. Only
+  `## [Unreleased]` belongs to the use case.

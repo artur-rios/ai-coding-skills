@@ -1,0 +1,5 @@
+# Line endings are LF in the repository and in the working tree, on every
+# platform. The index is already entirely LF, so this codifies what is there
+# rather than changing it: the skills are copied verbatim into agent folders by
+# sync-skills.ps1, and the templates are written into new repositories as is.
+* text=auto eol=lf

@@ -7,11 +7,14 @@ first document of a phase, then apply it to every file in that phase.
 
 `initial/` and `requirements/` are **siblings at the project root**, never nested
 inside one another. `Brainstorm.md` lives **inside `initial/`** alongside the
-documents it produced, and `README.md` sits at the root:
+documents it produced, and `README.md`, `CHANGELOG.md` and `CONTRIBUTING.md` sit
+at the root, written together in Phase 3:
 
 ```
 <project-root>/
 ├── README.md
+├── CHANGELOG.md
+├── CONTRIBUTING.md
 ├── initial/
 │   ├── Brainstorm.md
 │   ├── Project Overview.md
@@ -45,7 +48,9 @@ and the project name:
 ```
 
 The same project name string is used in all eleven specification documents. The
-`README.md` is the exception: its `H1` is the project name alone.
+three root files are the exception: the `README.md` `H1` is the project name
+alone, and `CHANGELOG.md` and `CONTRIBUTING.md` use the conventional `# Changelog`
+and `# Contributing`.
 
 ## 3. Identifier schemes
 

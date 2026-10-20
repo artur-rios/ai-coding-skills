@@ -3,21 +3,26 @@
 Implements a **series** of use cases end to end, unattended — the same workflow and
 the same verifications as [implement-use-case](implement-use-case.md), but the four
 human approval gates become automated checks and the skill merges its own pull
-requests before starting the next use case.
+requests — into the integration branch, `develop` where the repository enforces
+that model — before starting the next use case.
 
 ## What it does
 
 - Resolves what you asked for ("use cases from 01 to 11") into a concrete, ordered
   list, checked against the specification **before** anything starts.
-- Reads the project's workflow documents once, exactly as `implement-use-case` does.
+- Reads the project's workflow documents once, exactly as `implement-use-case` does,
+  including the branching model the repository enforces — which sets the base
+  branch even when a workflow document still says `main`.
 - Verifies it can actually run unattended: authenticated tooling, merge permission,
-  a clean tree, a test command, and no branch-protection rule requiring a human
-  approval.
+  a clean tree, a test command, and no branch-protection rule **or ruleset**
+  requiring a human approval, plus a merge method the base branch's ruleset allows.
 - **Asks once**, for the whole batch, then runs without further approval.
 - Per use case: loads the specs fresh, designs, branches, implements every flow,
-  tests until green, updates the README backlog, opens the pull request, waits for
-  CI, merges, deletes the branch, closes the issue, checks the Definition of Done,
-  syncs, and moves on.
+  tests until green, updates the README backlog, adds its `## [Unreleased]` entry
+  to `CHANGELOG.md`, opens the pull request, waits for CI (the Branch Policy check
+  included), merges, deletes the branch, closes the issue, checks the Definition of
+  Done — reporting its "reviewed by a human" item as merged under the batch
+  authorization rather than as a review that happened — syncs, and moves on.
 - Logs one line per completed use case, and stops the whole batch the moment a
   verification fails.
 
@@ -44,7 +49,7 @@ continues only if it holds.
 | **1** — design and plan approved | Every `AF-xx` mapped to a failure path, every cited `FR-xx` exists, plan sequenced test-first | A cited requirement doesn't exist, or a flow has no mapping |
 | **2** — implementation complete | Main flow **and every** `AF-xx` implemented | Any flow is stubbed or deferred |
 | **3** — suite green | The full suite, run in this session, unfiltered, output read | Tests still fail after the retry budget, or the run was filtered |
-| **4** — you merged | CI green, then the batch merges | CI fails, the merge conflicts, or is refused |
+| **4** — you merged | Required checks green — the Branch Policy check included — then the batch merges into the integration branch | CI fails, the merge conflicts, or is refused |
 
 A verification that **cannot** be performed counts as failed. No test command in
 the documents is a stop, not permission to skip testing.
@@ -56,8 +61,11 @@ the request says plainly that it will **merge its own pull requests, close the
 issues, and delete the branches**:
 
 > "11 use cases, UC-01 through UC-11, in specification order. Each gets its own
-> branch, issue and pull request; I'll merge each into `main` and close its issue
-> before starting the next. CI runs on pull requests and must be green to merge.
+> branch, issue and pull request, cut from `develop`; I'll merge each into
+> `develop` and close its issue before starting the next. Each pull request marks
+> its row in the README backlog and adds its entry under `## [Unreleased]` in
+> CHANGELOG.md. CI runs on pull requests — the tests and the Branch Policy check —
+> and must be green to merge. Releasing to `main` stays yours.
 > I stop the batch on a failing suite after 3 fix attempts, red CI, a merge
 > conflict, an ambiguous spec, or a dangling requirement — already-merged use cases
 > stay merged. Go ahead?"
@@ -76,7 +84,7 @@ authorized on its own scope.
 | Dangling reference | A use case cites an `FR-<AREA>-xx` that doesn't exist |
 | Missing specification | The use case has no entry to implement |
 | Ambiguous flow | A flow admits more than one reasonable implementation |
-| Branch protection | A required approving review, or a rule the merge would violate |
+| Branch protection | A required approving review, or a rule the merge would violate — classic protection or a ruleset |
 | Dirty tree | The working tree isn't clean between use cases |
 
 A stop ends the **batch**, not just the current use case — a failure at use case 4
@@ -98,6 +106,8 @@ intervention" never implies them:
 - Approving its own pull request to satisfy a required-review rule
 - Disabling, skipping, filtering, or deleting a test to make a suite green
 - Merging on red or unread CI
+- Opening or merging a pull request into `main`, cutting `release/*`, or pushing a
+  tag — releasing is yours
 - Editing branch protection, repo settings, or CI config to smooth its own path
 - Reverting merged work, or continuing past a stop condition
 
@@ -120,8 +130,9 @@ The same workflow documents [implement-use-case](implement-use-case.md) needs �
 typically the set [generate-specs-from-brainstorm](generate-specs-from-brainstorm.md)
 produces — plus a repository where the agent may merge.
 
-Document discovery is **shared verbatim** with `implement-use-case`, so the two
-skills can never read the same project differently.
+Document discovery, README tracking and the CHANGELOG entry are **shared
+verbatim** with `implement-use-case`, so the two skills can never read or record
+the same project differently.
 
 ## Files in this skill
 
@@ -130,7 +141,9 @@ skills can never read the same project differently.
 | `SKILL.md` | The procedure, the red flags, and the gates-to-verifications mapping. |
 | `references/autonomy-protocol.md` | Preconditions, what counts as authorization, the stop conditions, and the forbidden actions. |
 | `references/batch-control.md` | Resolving a range into identifiers, the per-use-case cycle, progress logging, and resuming a stopped batch. |
-| `references/doc-discovery.md` | Finding the workflow documents and extracting parameters — shared verbatim with `implement-use-case`. |
+| `references/doc-discovery.md` | Finding the workflow documents, the enforced branching model, and extracting parameters — shared verbatim with `implement-use-case`. |
+| `references/readme-tracking.md` | Marking the use case's README backlog row — shared verbatim with `implement-use-case`. |
+| `references/changelog-entry.md` | Writing the use case's `## [Unreleased]` CHANGELOG entry — shared verbatim with `implement-use-case`. |
 
 ## What you get back
 

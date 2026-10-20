@@ -1,5 +1,8 @@
 # README Issue Tracking
 
+*(Shared verbatim between `implement-use-case` and `implement-use-cases-batch`.
+Change it in both or neither.)*
+
 Some projects track their backlog in the repository `README.md` as well as in the
 issue tracker — a roadmap of milestones and a per-milestone table of issues. The
 layout `generate-specs-from-brainstorm` produces is the common case, but any
@@ -54,7 +57,8 @@ before writing one — the file will show you the convention:
 
 **If no row is complete yet, there is no convention to copy.** Pick the most
 obvious form for the column that exists — a checked box for checkboxes, `✅` for an
-emoji status column — state which you chose at Gate 3, and let the user correct it.
+emoji status column — state which you chose at Gate 3 (in a batch, in the
+report), and let the user correct it.
 Never introduce a second convention into a file that already has one.
 
 ## 4. When the row is missing

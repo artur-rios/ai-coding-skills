@@ -13,6 +13,10 @@ specify something different.
 Substitutions mirror the Workflow template: {{unit of work}}, {{UNIT}},
 {{branch pattern}}, {{branch pattern example}}, {{branch example}},
 {{test command}}. Use the SAME values here as in initial/Workflow.md.
+
+`develop` is the integration branch: every unit of work is branched from it and
+merged back into it. `main` only receives `release/x.y.z` branches; the branching
+model and the release process are in CONTRIBUTING.md, which Step 9 links.
 -->
 
 # Development Workflow Document — {{Project Name}}
@@ -37,7 +41,7 @@ happen in the delivery flow.
 
 ```mermaid
 flowchart TD
-    A["Pick a {{unit of work}}<br/>(issue in Todo)"] --> B["Create branch from main<br/>{{branch pattern}}"]
+    A["Pick a {{unit of work}}<br/>(issue in Todo)"] --> B["Create branch from develop<br/>{{branch pattern}}"]
     B --> C["Move issue → In Progress"]
     C --> D["Implement"]
     D --> E["Move issue → Testing"]
@@ -46,11 +50,11 @@ flowchart TD
     G --> H{All pass?}
     H -->|No| I["Fix code / tests"]
     I --> G
-    H -->|Yes| J["Open pull request"]
+    H -->|Yes| J["Record the change in CHANGELOG.md<br/>open pull request into develop"]
     J --> K["Human review"]
     K --> L{Approved?}
     L -->|Changes requested| I
-    L -->|Yes| M["Human merge to main<br/>delete branch"]
+    L -->|Yes| M["Human merge to develop<br/>delete branch"]
     M --> N["Move issue → Done and close it"]
 ```
 
@@ -61,7 +65,7 @@ flowchart TD
 | 1 | **Todo** | The {{unit of work}} has not been started (default). |
 | 2 | **In Progress** | A branch has been created and implementation has begun. |
 | 3 | **Testing** | Implementation is finished; tests are being written, run, and fixed until green. |
-| 4 | **Done** | The pull request has been reviewed and merged; the issue is then **closed**. |
+| 4 | **Done** | The pull request has been reviewed and merged into `develop`; the issue is then **closed**. |
 
 An issue only ever moves **forward** during normal flow. If review requests
 changes, work continues on the same branch (still linked to the same issue) until
@@ -69,13 +73,14 @@ tests pass again and the pull request is re-reviewed.
 
 ## 4. Step-by-step
 
-### Step 1 — Branch from the main branch
+### Step 1 — Branch from `develop`
 
 Every {{unit of work}} is implemented on its own branch, created from an
-up-to-date main branch:
+up-to-date `develop`, the integration branch. `main` only ever receives release
+branches (see [Step 9](#step-9--releases)):
 
 ```bash
-git switch main
+git switch develop
 git pull
 git switch -c {{branch pattern example}}
 ```
@@ -117,17 +122,24 @@ Following the
 
 A {{unit of work}} does not leave the Testing stage until the full suite is green.
 
-### Step 6 — Open a pull request
+### Step 6 — Record the change and open a pull request
 
-With all tests passing, push the branch and open a pull request into the main
-branch. The description references the {{unit of work}} and its issue (e.g.
-`Closes #<issue-number>`).
+With all tests passing, record the change on the same branch:
+
+- Add an entry under `## [Unreleased]` in [CHANGELOG.md](../CHANGELOG.md), under
+  the heading that fits (`Added`, `Changed`, `Fixed`, …), describing what a user
+  or operator would notice.
+- If the root README tracks the backlog, mark the {{unit of work}}'s row done.
+
+Both land with the implementation, in the same pull request. Then push the branch
+and open a pull request into `develop`. The description references the
+{{unit of work}} and its issue (e.g. `Closes #<issue-number>`).
 
 ### Step 7 — Human review and merge
 
 - The pull request is **reviewed by a human**. Requested changes are addressed on
   the same branch (back to Step 5 whenever code changes, so the suite stays green).
-- Once approved, a human **merges the pull request**.
+- Once approved, a human **merges the pull request into `develop`**.
 - The **branch is deleted** after the merge.
 
 > Review and merge are **human actions**. An agent may prepare and push the pull
@@ -137,15 +149,26 @@ branch. The description references the {{unit of work}} and its issue (e.g.
 
 After the merge, set the issue `Status` to **Done** and **close** it.
 
+### Step 9 — Releases
+
+A {{unit of work}} is done once it is merged into `develop`; it reaches users in
+the next release. Releases are cut from `develop` as `release/x.y.z` branches
+and merged into `main`, where the release is tagged `vx.y.z`. The branching model,
+the Branch Policy check that enforces it, and the release steps are in
+[CONTRIBUTING.md](../CONTRIBUTING.md).
+
 ## 5. Definition of Done
 
 A {{unit of work}} is done only when **all** of the following hold:
 
-- [ ] Implemented on a `{{branch pattern}}` branch created from the main branch.
+- [ ] Implemented on a `{{branch pattern}}` branch created from `develop`.
 - [ ] Main flow and every alternative flow from the specification are implemented.
 - [ ] Tests cover it per the Testing Specification.
 - [ ] The full test suite passes.
-- [ ] A pull request was reviewed by a human and merged.
+- [ ] The change is recorded under `## [Unreleased]` in `CHANGELOG.md`, and the
+      README backlog row (if the README tracks one) is marked done, in the same
+      pull request.
+- [ ] A pull request into `develop` was reviewed by a human and merged.
 - [ ] The branch was deleted.
 - [ ] The issue is in **Done** and closed.
 
@@ -155,3 +178,4 @@ A {{unit of work}} is done only when **all** of the following hold:
 - [Testing Specification Document](Testing%20Specification%20Document.md) — how the tests are written.
 - [System Requirements Document](System%20Requirements%20Document.md) — functional/non-functional requirements.
 - [Technology Stack Document](Technology%20Stack%20Document.md) — technologies and versions used.
+- [CONTRIBUTING.md](../CONTRIBUTING.md) — building, testing, the branching model, versioning, and releasing.

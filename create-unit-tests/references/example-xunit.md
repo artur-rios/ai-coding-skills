@@ -8,6 +8,15 @@ matter, not the specific library.
 ## Code under test
 
 ```csharp
+public interface IPaymentGateway
+{
+    Receipt Charge(int total);
+}
+
+public class Receipt;
+
+public class PaymentDeclinedException : Exception;
+
 public class Cart
 {
     private readonly Dictionary<string, int> _items = new();
@@ -55,6 +64,9 @@ called with the right total), and error propagation (gateway throws).
 using Moq;
 using Xunit;
 
+// The category lets CI run unit and functional tests as separate jobs
+// (dotnet test --filter "Category=Unit"). Use the project's own marker.
+[Trait("Category", "Unit")]
 public class CartServiceTests
 {
     private static CartService MakeSut(out Mock<IPaymentGateway> gateway, Cart? cart = null)

@@ -2,8 +2,9 @@
 
 Drives a **single use case** from backlog to a review-ready pull request — loading
 the specs, refining a design and plan, branching, implementing every flow, testing
-until green, and preparing the PR — stopping for your approval at every stage
-boundary.
+until green, recording the change in the README backlog and the CHANGELOG, and
+preparing the PR into your integration branch — stopping for your approval at every
+stage boundary.
 
 It is a production line, not a code generator: it follows **your project's own
 workflow documents** rather than a process baked into the skill.
@@ -13,6 +14,12 @@ workflow documents** rather than a process baked into the skill.
 - Reads the project's `Development Workflow Document` and `Workflow.md` at
   invocation time and extracts the real parameters: branch pattern, base branch,
   status lifecycle, issue tracker, test commands, Definition of Done.
+- Checks whether the repository **enforces** a branching model — a branching
+  section in `CONTRIBUTING.md`, a Branch Policy workflow, a `develop` branch,
+  rulesets. Where it does, that model sets the base branch: work is cut from
+  `develop` as `feature/` (or `fix/`) and the pull request targets `develop`, never
+  `main`, which only takes release pull requests. A workflow document that still
+  says `main` is reported as stale at Gate 1, not followed and not silently fixed.
 - Loads the specifications for the named use case — actors, main flow, every
   `AF-xx` alternative flow, the `FR-xx` requirements it cites, the data model, the
   authorization rules, the testing standard, the technology stack.
@@ -21,8 +28,9 @@ workflow documents** rather than a process baked into the skill.
 - Branches, implements the main flow and every alternative flow, tests until the
   suite is actually green, and prepares the pull request — pausing at each
   boundary.
-- Marks the use case done in the README backlog, when the project keeps one, so
-  the status change merges with the implementation.
+- Marks the use case done in the README backlog, when the project keeps one, and
+  adds its entry under `## [Unreleased]` in `CHANGELOG.md`, when the project keeps
+  one, so both merge with the implementation.
 - Verifies the Definition of Done from the project's document, not a remembered
   version of it.
 
@@ -57,7 +65,7 @@ do on its own:
 |---|---|---|
 | 1 | Design and plan written | Any code being written |
 | 2 | Implementation complete | Moving to the testing stage |
-| 3 | Full suite green | The README tracking update and the pull request |
+| 3 | Full suite green | The README tracking update, the CHANGELOG entry, and the pull request |
 | 4 | You merged and deleted the branch | Closing the issue |
 
 **Exactly one transition is unattended:** marking the work started, right after the
@@ -67,7 +75,8 @@ branch is created.
 the pull request. Approvals are never banked, and gates are never batched into one
 message.
 
-**Always yours:** approving the pull request, merging it, and deleting the branch.
+**Always yours:** approving the pull request, merging it, deleting the branch, and
+releasing — cutting `release/*`, the pull request into `main`, the tag.
 The skill may prepare and push the branch and open the PR once Gate 3 clears —
 that's the boundary. A blanket "just do the whole thing" skips gates, not those.
 
@@ -90,6 +99,22 @@ implementation rather than as a direct commit to your base branch. Marking it do
 before the merge isn't premature: the edit is invisible on the base branch until
 the pull request merges, which is the same moment the issue closes. If the pull
 request is abandoned, the README change goes with it.
+
+## CHANGELOG entry
+
+Projects that keep a `CHANGELOG.md` record every change under `## [Unreleased]` in
+the same pull request that makes it, and a use case is no exception.
+
+| Behavior | Rule |
+|---|---|
+| Detection | `CHANGELOG.md` at the root with a `## [Unreleased]` section. `CONTRIBUTING.md` usually says who it is written for. |
+| Subsection | `### Added` for a new capability (the usual case), `### Fixed` for a fix, `### Changed` / `### Removed` / `### Security` when they fit — reused if already present. |
+| Wording | Written for the changelog's reader — API client, operator, or user — in the file's own phrasing. Not a list of handlers and tests. |
+| Scope of the edit | One entry under `## [Unreleased]`. Released sections and the compare links are left alone; the owner finalizes them at release time. |
+| No `CHANGELOG.md` | None is created; Gate 3 says so. |
+
+The exact entry is shown at Gate 3 and committed on the use case's branch with the
+README update.
 
 ## Requirements
 
@@ -120,21 +145,29 @@ If both workflow documents exist and contradict each other — different branch
 patterns, a gate present in one and absent in the other — it surfaces the conflict
 and asks, rather than silently picking one.
 
+The one thing a document cannot override is a branching model the repository
+**enforces**: a pull request the Branch Policy check rejects cannot merge, so the
+enforced base branch and prefixes win, and the disagreeing document is reported.
+
 ## How it works
 
 1. **Identify** the use case; one invocation handles exactly one.
 2. **Locate and validate** the workflow documents; stop if they're missing.
-3. **Extract** the project's parameters and report them, so a misread is cheap to
-   fix.
+3. **Extract** the project's parameters — including the enforced branching model
+   and whether a README backlog and a `CHANGELOG.md` exist — and report them, so a
+   misread is cheap to fix.
 4. **Load** the specifications for this use case and find its tracking issue.
-5. **Design and plan**, grounded in the repository's existing patterns → **Gate 1**.
-6. **Branch** and mark the work started — the one unattended transition.
+5. **Design and plan**, grounded in the repository's existing patterns → **Gate 1**,
+   which also names the branch, its base, and any stale workflow document.
+6. **Branch** from the base (`develop` on the `develop` flow) and mark the work
+   started — the one unattended transition.
 7. **Implement** the main flow and every alternative flow.
 8. **Gate 2** → move to the testing status.
 9. **Test until green**, reporting real command output.
 10. **Gate 3**.
-11. **Mark the use case done in the README** — only if the README tracks issues.
-12. **Push and open the pull request**, then hand off.
+11. **Record the use case** — its README backlog row, if the README tracks issues,
+    and its `## [Unreleased]` CHANGELOG entry, if the project keeps a changelog.
+12. **Push and open the pull request** into the base branch, then hand off.
 13. **Gate 4** → close out after you merge.
 14. **Verify** the Definition of Done from the project's document.
 
@@ -143,12 +176,14 @@ and asks, rather than silently picking one.
 | Path | Purpose |
 |---|---|
 | `SKILL.md` | The procedure, the red flags, and the gate structure. |
-| `references/doc-discovery.md` | Finding the workflow documents, resolving conflicts between them, and the parameter-extraction table. |
+| `references/doc-discovery.md` | Finding the workflow documents, resolving conflicts between them, the enforced branching model, and the parameter-extraction table. |
 | `references/gate-protocol.md` | What a pause looks like, what never counts as approval, and which actions stay human. |
 | `references/readme-tracking.md` | Detecting a README backlog, which rows to change, and matching the file's own done marker. |
+| `references/changelog-entry.md` | Detecting a changelog, choosing the `## [Unreleased]` subsection, and writing the entry for its reader. |
 
 ## What you get back
 
 A use case implemented on its own branch with every flow covered, a green suite
-whose real output you've seen, and a pull request ready for your review — with four
+whose real output you've seen, its backlog row and changelog entry in place, and a
+pull request into your integration branch ready for your review — with four
 points along the way where the work stopped and asked.
