@@ -116,7 +116,7 @@ repositories.
   generates.
 
 The version is not stored in any file: a release's version is its `## [<version>]` heading in
-[CHANGELOG.md](./CHANGELOG.md) and its `v<version>` tag on `main`. No release has been tagged yet.
+[CHANGELOG.md](./CHANGELOG.md) and its `v<version>` tag on `main`.
 
 ## Releasing
 
