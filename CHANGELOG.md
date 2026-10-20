@@ -73,6 +73,10 @@ instead of copying them, and the `develop` / `release/<version>` / `main` branch
   update, and never create a CHANGELOG or touch released sections.
 - `implement-use-cases-batch` checks rulesets as well as branch protection for a required review and the allowed merge
   methods, waits for the Branch Policy check, merges only into the integration branch and leaves releases to the owner.
+- `create-unit-tests` works in any stack and kind of project: a per-stack reference covers framework detection, where
+  tests go (`tests/` in a scaffold-project repository), the Given-When-Then spelling per language, unit markers and
+  their CI filters, mocks, data-driven tests and run commands, and the edge-case taxonomy adds async / time and what
+  UI components, HTTP handlers, CLIs and data access add.
 - `create-unit-tests` marks new test classes with the project's category (`[Trait("Category", "Unit")]` or its own
   marker) when CI runs unit and functional tests as separate filtered jobs.
 - `sync-skills.ps1` also removes the skills this repository no longer ships from each target folder — only skills it

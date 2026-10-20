@@ -84,7 +84,17 @@ Then the shadcn steps, from <https://ui.shadcn.com/docs/installation/vite>:
   },
   ```
 
-  `tests/setup.ts`: `import "@testing-library/jest-dom/vitest";`
+  `tests/setup.ts` — the matchers, and the cleanup Testing Library only registers by itself
+  when Vitest's globals are on (without it, every test after the first renders into a page
+  that still holds the previous one):
+
+  ```ts
+  import "@testing-library/jest-dom/vitest";
+  import { cleanup } from "@testing-library/react";
+  import { afterEach } from "vitest";
+
+  afterEach(cleanup);
+  ```
 
   Add `"tests"` to `include` in `tsconfig.app.json` so the editor and `tsc -b` type-check the tests
   with the same `@/` alias.
