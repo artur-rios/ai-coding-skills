@@ -1,0 +1,14 @@
+# What Jenkins checks for this repository, read by the pipeline of the yggdrasil installation that deploys it
+# (yggdrasil's docs/catalog.md, "Repository pipeline file", has every field). It is data, never code. Check it where
+# the catalog is, in the yggdrasil checkout:
+#   python3 scripts/pipeline_config.py describe ai-coding-skills <this repository's checkout>
+#
+# This repository has no checks: only its branch policy ran on GitHub, and Jenkins runs yggdrasil's common branch
+# policy for it. The old workflow also had a "Validate release version" step, which the common policy does not
+# know: a pull request from release/x.y.z into main must find its version in CHANGELOG.md. It is kept here.
+
+# After yggdrasil's own branch policy (ci/branch-policy.sh says what it adds), in a small image from the root of the
+# pull request's head checkout.
+branchPolicy:
+  image: alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
+  run: sh ci/branch-policy.sh
