@@ -1,5 +1,8 @@
 # Contributing
 
+This repository lives at <https://git.techcraftsmen.net/artur-rios/ai-coding-skills>; the GitHub repository is a
+read-only mirror of it. Open pull requests on the git server.
+
 ## Prerequisites
 
 - Git
@@ -87,13 +90,15 @@ a feature branch to try that branch's skills out, and run it from `main` again a
 
 `develop` is the integration branch and the base for all new work; `main` only holds released skills.
 
-Branch off `develop` — `feature/<name>` for new skills or behaviour, `fix/<name>` for fixes (`chore/`, `refactor/`,
-`docs/`, `ci/`, `test/`, `perf/` and `build/` are accepted too) — and open a pull request back into `develop`.
+Branch off `develop` — `feature/<name>` for new skills or behaviour, `fix/<name>` for fixes (lowercase letters, digits,
+`.`, `_` and `-` in the name) — and open a pull request back into `develop`. Renovate's `renovate/*` dependency-update
+branches are accepted into `develop` too, and `main` only receives `release/<version>` pull requests.
 
-Pull requests into `develop` and `main` must pass the branch policy check
-([`branch-policy.yml`](.github/workflows/branch-policy.yml)); the repository has no other CI. The rulesets
-"Develop: PRs only" and "Main: release PRs only" reject direct pushes, force pushes and deletion, and `main` takes
-merge commits only.
+Pull requests into `develop` and `main` must pass the `branch-policy` check, which Jenkins runs; the repository has no
+other CI. Jenkins applies the branching model common to the repositories (`scripts/branch-policy.sh` in yggdrasil), then
+[`ci/branch-policy.sh`](ci/branch-policy.sh), configured in [`yggdrasil.yml`](yggdrasil.yml), which holds a release to
+its changelog. Direct pushes, force pushes and deletion of `develop` and `main` are rejected, and `main` takes merge
+commits only.
 
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/) with a lowercase subject, e.g.
 `feat: add scaffold-project skill` or `fix: scope skills and align them on one pattern`. The
@@ -120,10 +125,13 @@ The version is not stored in any file: a release's version is its `## [<version>
 
 ## Releasing
 
-1. Cut `release/<version>` from `develop`, rename `## [Unreleased]` in [CHANGELOG.md](./CHANGELOG.md) to
-   `## [<version>] - <yyyy-mm-dd>` above a fresh, empty `## [Unreleased]`, update the links at the bottom, and open a
-   pull request into `main`. Only `release/*` branches can be merged into `main`; the branch policy check rejects a
-   release branch whose CHANGELOG has no section for its version, or whose version is already tagged.
+1. A release branch is a snapshot of `develop` and carries no commits of its own, so prepare the release on `develop`
+   first, in a `feature/` or `fix/` branch merged like any other: rename `## [Unreleased]` in
+   [CHANGELOG.md](./CHANGELOG.md) to `## [<version>] - <yyyy-mm-dd>` above a fresh, empty `## [Unreleased]` and update
+   the links at the bottom. Then cut `release/<version>` from the updated `develop` and open a pull request into
+   `main`. Only `release/*` branches can be merged into `main`; the branch policy check rejects a release branch that
+   carries a commit `develop` does not have, whose CHANGELOG has no section for its version, or whose version is
+   already tagged.
 2. Once it is merged, tag the merge commit on `main`:
 
    ```bash
@@ -131,8 +139,7 @@ The version is not stored in any file: a release's version is its `## [<version>
    git tag v<version> && git push origin v<version>
    ```
 
-3. Open a pull request from `main` into `develop` to bring the release back into the integration branch.
-4. Sync the released skills to your agents from an up-to-date `main` (see
+3. Sync the released skills to your agents from an up-to-date `main` (see
    [Syncing the skills to your agents](#syncing-the-skills-to-your-agents)).
 
 Only the repository owner can push tags ("Version tags" ruleset).
