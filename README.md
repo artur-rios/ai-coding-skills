@@ -14,6 +14,10 @@ A collection of reusable **agent skills** for AI coding assistants such as
 workflow — instructions, templates, and reference material — that the agent loads
 on demand when your request matches the skill's purpose.
 
+> **Where this lives:** the repository is at
+> <https://git.techcraftsmen.net/artur-rios/ai-coding-skills>. The GitHub
+> repository is a read-only mirror of it.
+
 ## What's a skill?
 
 A skill is a directory containing a `SKILL.md` file with YAML frontmatter
@@ -45,7 +49,8 @@ and what files it contains.
 ├── README.md
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
-├── .github/workflows/branch-policy.yml
+├── yggdrasil.yml                      # The release version gate Jenkins runs after the branch policy
+├── ci/branch-policy.sh
 ├── docs/                              # Per-skill documentation (linked above)
 │   ├── create-unit-tests.md
 │   ├── create-nuget-publish-workflow.md
