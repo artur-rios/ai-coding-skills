@@ -1,11 +1,5 @@
 # ai-coding-skills
 
-> [!NOTE]
-> This is the real, open-source code of ai-coding-skills. Its home is Forgejo, at
-> https://git.techcraftsmen.net/artur-rios/ai-coding-skills; the copy on GitHub is a read-only mirror, for viewing only, and
-> its issues and pull requests are not followed. If you want to contribute, email me at
-> arturdev@duck.com.
-
 [![License: Attribution](https://img.shields.io/badge/License-Attribution-blue.svg)](./LICENSE)
 
 A collection of reusable **agent skills** for AI coding assistants such as
@@ -13,10 +7,6 @@ A collection of reusable **agent skills** for AI coding assistants such as
 [Codex](https://developers.openai.com/codex) and [opencode](https://opencode.ai). Each skill packages a focused, repeatable
 workflow — instructions, templates, and reference material — that the agent loads
 on demand when your request matches the skill's purpose.
-
-> **Where this lives:** the repository is at
-> <https://git.techcraftsmen.net/artur-rios/ai-coding-skills>. The GitHub
-> repository is a read-only mirror of it.
 
 ## What's a skill?
 
@@ -138,6 +128,9 @@ Notable changes are recorded in [CHANGELOG.md](./CHANGELOG.md). Releases follow
 
 The shape every skill follows, how to add or edit a skill, how to sync the skills to your agents' skill folders, the
 branching model and the release process are described in [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+The GitHub repository is a read-only mirror for the real, open-source code of ai-coding-skills. Its home is Forgejo, at
+https://git.techcraftsmen.net/artur-rios/ai-coding-skills. If you want to contribute, e-mail me at arturdev@duck.com.
 
 ## Author
 
